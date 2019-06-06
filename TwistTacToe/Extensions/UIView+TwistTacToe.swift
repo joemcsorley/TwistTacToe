@@ -12,4 +12,13 @@ extension UIView {
         subView.translatesAutoresizingMaskIntoConstraints = false
         addSubview(subView)
     }
+
+    var normalizedLayoutGuide: UILayoutGuide {
+        if #available(iOS 11.0, *) {
+            return safeAreaLayoutGuide
+        }
+        else {
+            return layoutMarginsGuide
+        }
+    }
 }

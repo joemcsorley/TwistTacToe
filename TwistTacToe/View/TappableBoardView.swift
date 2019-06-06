@@ -37,11 +37,12 @@ class TappableBoardView: UIView {
     }
     
     private func setup() {
+        backgroundColor = UIColor.brown
         for i in boardRange {
             let boardPosition = UIButton()
             boardPosition.setTitleColor(UIColor.brown, for: .normal)
             boardPosition.titleLabel?.font = UIFont.systemFont(ofSize: fontSize)
-            boardPosition.backgroundColor = UIColor.white
+            boardPosition.backgroundColor = UIColor("#FFD9AA")
             addSubviewWithAutoLayout(boardPosition)
             boardPosition.tag = i
             boardPosition.addTarget(self, action: #selector(handleTapped(boardPosition:)), for: .touchUpInside)
@@ -60,15 +61,23 @@ class TappableBoardView: UIView {
     private func layout() {
         NSLayoutConstraint.activate([
             topMarginGuide.topAnchor.constraint(equalTo: topAnchor),
-            
-            bottomMarginGuide.heightAnchor.constraint(equalTo: boardPositions[0].heightAnchor, multiplier: separatorThicknessPercentage),
+            topMarginGuide.heightAnchor.constraint(equalToConstant: 0),
+
+            horizontal1MarginGuide.heightAnchor.constraint(equalTo: boardPositions[0].heightAnchor, multiplier: separatorThicknessPercentage),
+            horizontal2MarginGuide.heightAnchor.constraint(equalTo: boardPositions[0].heightAnchor, multiplier: separatorThicknessPercentage),
+
+            bottomMarginGuide.heightAnchor.constraint(equalToConstant: 0),
             bottomMarginGuide.leadingAnchor.constraint(equalTo: leadingAnchor),
             bottomMarginGuide.trailingAnchor.constraint(equalTo: trailingAnchor),
             bottomMarginGuide.bottomAnchor.constraint(equalTo: bottomAnchor),
             
             leadingMarginGuide.leadingAnchor.constraint(equalTo: leadingAnchor),
-            
-            trailingMarginGuide.widthAnchor.constraint(equalTo: boardPositions[0].widthAnchor, multiplier: separatorThicknessPercentage),
+            leadingMarginGuide.widthAnchor.constraint(equalToConstant: 0),
+
+            vertical1MarginGuide.widthAnchor.constraint(equalTo: boardPositions[0].widthAnchor, multiplier: separatorThicknessPercentage),
+            vertical2MarginGuide.widthAnchor.constraint(equalTo: boardPositions[0].widthAnchor, multiplier: separatorThicknessPercentage),
+
+            trailingMarginGuide.widthAnchor.constraint(equalToConstant: 0),
             trailingMarginGuide.topAnchor.constraint(equalTo: topAnchor),
             trailingMarginGuide.bottomAnchor.constraint(equalTo: bottomAnchor),
             trailingMarginGuide.trailingAnchor.constraint(equalTo: trailingAnchor),
@@ -87,7 +96,7 @@ class TappableBoardView: UIView {
     
     private func layoutHorizontals(rowAtIndex rowStartIndex: Int, topHorizontalGuide: UILayoutGuide, bottomHorizontalGuide: UILayoutGuide) {
         NSLayoutConstraint.activate([
-            topHorizontalGuide.heightAnchor.constraint(equalTo: boardPositions[rowStartIndex].heightAnchor, multiplier: separatorThicknessPercentage),
+//            topHorizontalGuide.heightAnchor.constraint(equalTo: boardPositions[rowStartIndex].heightAnchor, multiplier: separatorThicknessPercentage),
             topHorizontalGuide.leadingAnchor.constraint(equalTo: leadingAnchor),
             topHorizontalGuide.trailingAnchor.constraint(equalTo: trailingAnchor),
             
@@ -108,7 +117,7 @@ class TappableBoardView: UIView {
 
     private func layoutVerticals(columnAtIndex columnStartIndex: Int, leadingVerticalGuide: UILayoutGuide, trailingVerticalGuide: UILayoutGuide) {
         NSLayoutConstraint.activate([
-            leadingVerticalGuide.widthAnchor.constraint(equalTo: boardPositions[columnStartIndex].widthAnchor, multiplier: separatorThicknessPercentage),
+//            leadingVerticalGuide.widthAnchor.constraint(equalTo: boardPositions[columnStartIndex].widthAnchor, multiplier: separatorThicknessPercentage),
             leadingVerticalGuide.topAnchor.constraint(equalTo: topAnchor),
             leadingVerticalGuide.bottomAnchor.constraint(equalTo: bottomAnchor),
             

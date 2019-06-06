@@ -15,7 +15,8 @@ class ViewController: UIViewController {
     private let humanIsPlayerOButton = UIButton()
     private let humanIsPlayerOLabel = UILabel()
     private let startEndButton = UIButton()
-    
+    private let howToPlayButton = UIButton(type: .custom)
+
     private let radioButtonSize: CGFloat = 32
     
     private var isHumanPlayerX = true
@@ -37,6 +38,7 @@ class ViewController: UIViewController {
         setupRotationMap()
         setupHumanIsPlayerButtons()
         setupStartEndButton()
+        setupHowToPlayButton()
         layout()
     }
     
@@ -55,7 +57,8 @@ class ViewController: UIViewController {
         view.addSubviewWithAutoLayout(humanIsPlayerOButton)
         view.addSubviewWithAutoLayout(humanIsPlayerOLabel)
         view.addSubviewWithAutoLayout(startEndButton)
-        
+        view.addSubviewWithAutoLayout(howToPlayButton)
+
         humanIsPlayerXLabel.text = humanIsPlayerXText
         humanIsPlayerOLabel.text = humanIsPlayerOText
         
@@ -79,11 +82,18 @@ class ViewController: UIViewController {
         updateStartEndButton()
     }
 
+    private func setupHowToPlayButton() {
+        howToPlayButton.setTitle("How to Play", for: .normal)
+        howToPlayButton.setTitleColor(UIColor.brown, for: .normal)
+        howToPlayButton.titleLabel?.font = UIFont.systemFont(ofSize: 12, weight: .bold)
+        howToPlayButton.addTarget(self, action: #selector(handleHowToPlay), for: .touchUpInside)
+    }
+
     private func layout() {
         NSLayoutConstraint.activate([
-            boardView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 15),
-            boardView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            boardView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            boardView.topAnchor.constraint(equalTo: view.normalizedLayoutGuide.topAnchor, constant: 15),
+            boardView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 15),
+            boardView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -15),
             
             rotationMapView.topAnchor.constraint(equalTo: boardView.bottomAnchor, constant: 30),
             rotationMapView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -8),
@@ -107,10 +117,14 @@ class ViewController: UIViewController {
             humanIsPlayerOLabel.trailingAnchor.constraint(equalTo: rotationMapView.leadingAnchor, constant: -15),
             humanIsPlayerOLabel.centerYAnchor.constraint(equalTo: humanIsPlayerOButton.centerYAnchor),
 
+            startEndButton.topAnchor.constraint(equalTo: humanIsPlayerOLabel.bottomAnchor, constant: 30),
             startEndButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 15),
-            startEndButton.topAnchor.constraint(equalTo: humanIsPlayerOButton.bottomAnchor, constant: 30),
             startEndButton.trailingAnchor.constraint(equalTo: rotationMapView.leadingAnchor, constant: -15),
-            startEndButton.heightAnchor.constraint(equalToConstant: 44),
+            startEndButton.heightAnchor.constraint(equalToConstant: radioButtonSize),
+
+            howToPlayButton.bottomAnchor.constraint(equalTo: view.normalizedLayoutGuide.bottomAnchor, constant: -15),
+            howToPlayButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -15),
+            howToPlayButton.heightAnchor.constraint(equalToConstant: 14),
         ])
     }
     
@@ -130,31 +144,36 @@ class ViewController: UIViewController {
 
     @objc
     private func handleStartEndGame() {
-        if let _ = game {
+        guard game == nil else {
             reset()
+            return
         }
-        else {
-            boardView.isEnabled = true
-            setPlayerButtons(enabled: false)
-            let playerX: Player = isHumanPlayerX ? HumanPlayer(symbol: .X) : AutomatedRandomPlayer(symbol: .X)
-            let playerO: Player = isHumanPlayerX ? AutomatedRandomPlayer(symbol: .O) : HumanPlayer(symbol: .O)
-//            let playerX: Player = HumanPlayer(symbol: .X)
-//            let playerO: Player = HumanPlayer(symbol: .O)
-            gameResultText = nil
-            game = GameController(playerX: playerX, playerO: playerO)
-            game?.updatedBoardHandler = handleUpdatedGameBoard
-            game?.play()
-                .done { winningSymbol in
-                    self.handleGameOver(withWinner: winningSymbol, error: nil)
-                }
-                .catch { error in
-                    self.handleGameOver(withWinner: nil, error: error)
-                }
-            updateRotationMap()
+        
+        boardView.isEnabled = true
+        setPlayerButtons(enabled: false)
+        let playerX: Player = isHumanPlayerX ? HumanPlayer(symbol: .X) : AutomatedRandomPlayer(symbol: .X)
+        let playerO: Player = isHumanPlayerX ? AutomatedRandomPlayer(symbol: .O) : HumanPlayer(symbol: .O)
+//        let playerX: Player = HumanPlayer(symbol: .X)
+//        let playerO: Player = HumanPlayer(symbol: .O)
+        gameResultText = nil
+        game = GameController(playerX: playerX, playerO: playerO)
+        game?.updatedBoardHandler = handleUpdatedGameBoard
+        game?.play()
+            .done { winningSymbol in
+                self.handleGameOver(withWinner: winningSymbol, error: nil)
+            }
+            .catch { error in
+                self.handleGameOver(withWinner: nil, error: error)
         }
+        updateRotationMap()
         updateStartEndButton()
     }
 
+    @objc
+    private func handleHowToPlay() {
+        print("Explain how to play the game here")
+    }
+    
     private func handleTapped(_ boardLocation: BoardLocation) {
         game?.handleGameBoardTapped(atLocation: boardLocation)
     }
