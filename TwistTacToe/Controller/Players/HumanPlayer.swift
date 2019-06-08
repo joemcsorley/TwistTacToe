@@ -15,6 +15,15 @@ class HumanPlayer: Player {
     
     init(symbol: GamePiece) {
         self.symbol = symbol
+        setupObservers()
+    }
+    
+    private func setupObservers() {
+        NotificationCenter.default.addObserver(self, selector: #selector(handleGameBoardTapped), name: UINotifications.gameBoardTapped, object: nil)
+    }
+    
+    deinit {
+        NotificationCenter.default.removeObserver(self)
     }
     
     func takeTurn(onBoard board: GameBoard, rotationPattern: RotationPattern) -> Promise<GameBoard> {
@@ -24,8 +33,11 @@ class HumanPlayer: Player {
         }
     }
 
-    func handleGameBoardTapped(atLocation boardLocation: BoardLocation) {
-        guard let board = currentBoard else { return }
+    @objc
+    func handleGameBoardTapped(_ notification: NSNotification) {
+        guard let board = currentBoard,
+            let boardLocation = notification.userInfo?[UINotificationKeys.boardLocation] as? BoardLocation
+            else { return }
         do {
             let updatedBoard = try board.newByPlaying(symbol, atLocation: boardLocation)
             currentBoard = nil

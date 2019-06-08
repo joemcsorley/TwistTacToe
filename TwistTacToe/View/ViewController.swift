@@ -175,7 +175,8 @@ class ViewController: UIViewController {
     }
     
     private func handleTapped(_ boardLocation: BoardLocation) {
-        game?.handleGameBoardTapped(atLocation: boardLocation)
+        NotificationCenter.default.post(name: UINotifications.gameBoardTapped, object: self,
+                                        userInfo: [UINotificationKeys.boardLocation: boardLocation])
     }
 
     // MARK: - Helper Methods
@@ -279,3 +280,15 @@ private let youWonText = NSLocalizedString("You Won!", comment: "You Won")
 private let youLostText = NSLocalizedString("You Lost.", comment: "You Lost")
 private let youTiedText = NSLocalizedString("You Tied.", comment: "You tied")
 private let okButtonTitle = NSLocalizedString("Ok", comment: "Ok button text")
+
+// MARK: - Notifications
+
+struct UINotifications {
+    static let gameBoardTapped = NSNotification.Name("gameBoardTapped")
+}
+
+// MARK: - Notification Keys
+
+struct UINotificationKeys {
+    static let boardLocation = "boardLocation"
+}

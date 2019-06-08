@@ -44,10 +44,6 @@ class GameController {
         }
     }
     
-    func handleGameBoardTapped(atLocation boardLocation: Int) {
-        currentPlayer?.handleGameBoardTapped(atLocation: boardLocation)
-    }
-
     // MARK: - Helpers
 
     // Evaluates the game state and either ends it, or starts another turn cycle.
