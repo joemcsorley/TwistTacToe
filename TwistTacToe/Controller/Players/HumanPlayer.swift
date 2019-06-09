@@ -36,8 +36,9 @@ class HumanPlayer: Player {
         do {
             let updatedBoard = try board.newByPlaying(symbol, atLocation: boardLocation)
             currentBoard = nil
-            NotificationCenter.default.post(name: PlayerNotification.playerHasPlayed, object: self,
-                                            userInfo: [PlayerNotificationKey.updatedBoard: updatedBoard])
+            let userInfo: [AnyHashable: Any] = [PlayerNotificationKey.boardLocation: boardLocation,
+                                                PlayerNotificationKey.updatedBoard: updatedBoard]
+            NotificationCenter.default.post(name: PlayerNotification.playerHasPlayed, object: self, userInfo: userInfo)
         }
         catch GameBoardError.boardLocationAlreadyOccupied {
             // If the user tapped on an already-occupied space, then ignore it

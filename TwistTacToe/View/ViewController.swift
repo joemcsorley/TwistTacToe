@@ -16,6 +16,8 @@ class ViewController: UIViewController {
     private let humanIsPlayerOLabel = UILabel()
     private let startEndButton = UIButton()
     private let howToPlayButton = UIButton(type: .custom)
+    private let undoButton = UIButton(type: .custom)
+    private let redoButton = UIButton(type: .custom)
 
     private let radioButtonSize: CGFloat = 32
     
@@ -39,6 +41,7 @@ class ViewController: UIViewController {
         setupHumanIsPlayerButtons()
         setupStartEndButton()
         setupHowToPlayButton()
+        setupUndoRedoButtons()
         layout()
         setupObservers()
     }
@@ -57,8 +60,6 @@ class ViewController: UIViewController {
         view.addSubviewWithAutoLayout(humanIsPlayerXLabel)
         view.addSubviewWithAutoLayout(humanIsPlayerOButton)
         view.addSubviewWithAutoLayout(humanIsPlayerOLabel)
-        view.addSubviewWithAutoLayout(startEndButton)
-        view.addSubviewWithAutoLayout(howToPlayButton)
 
         humanIsPlayerXLabel.text = humanIsPlayerXText
         humanIsPlayerOLabel.text = humanIsPlayerOText
@@ -81,15 +82,35 @@ class ViewController: UIViewController {
         startEndButton.addTarget(self, action: #selector(handleStartEndGame), for: .touchUpInside)
         startEndButton.layer.cornerRadius = 4
         updateStartEndButton()
+        view.addSubviewWithAutoLayout(startEndButton)
     }
 
     private func setupHowToPlayButton() {
-        howToPlayButton.setTitle("How to Play", for: .normal)
+        howToPlayButton.setTitle(howToPlayButtonTitle, for: .normal)
         howToPlayButton.setTitleColor(UIColor.brown, for: .normal)
         howToPlayButton.titleLabel?.font = UIFont.systemFont(ofSize: 12, weight: .bold)
         howToPlayButton.addTarget(self, action: #selector(handleHowToPlay), for: .touchUpInside)
+        view.addSubviewWithAutoLayout(howToPlayButton)
     }
 
+    private func setupUndoRedoButtons() {
+        undoButton.setTitle(undoButtonTitle, for: .normal)
+        undoButton.setTitleColor(UIColor.brown, for: .normal)
+        undoButton.setTitleColor(UIColor("#FEAF7B"), for: .disabled)
+        undoButton.titleLabel?.font = UIFont.systemFont(ofSize: 12, weight: .bold)
+        undoButton.addTarget(self, action: #selector(handleUndo), for: .touchUpInside)
+        undoButton.isEnabled = false
+        view.addSubviewWithAutoLayout(undoButton)
+
+        redoButton.setTitle(redoButtonTitle, for: .normal)
+        redoButton.setTitleColor(UIColor.brown, for: .normal)
+        redoButton.setTitleColor(UIColor("#FEAF7B"), for: .disabled)
+        redoButton.titleLabel?.font = UIFont.systemFont(ofSize: 12, weight: .bold)
+        redoButton.addTarget(self, action: #selector(handleRedo), for: .touchUpInside)
+        redoButton.isEnabled = false
+        view.addSubviewWithAutoLayout(redoButton)
+    }
+    
     private func layout() {
         NSLayoutConstraint.activate([
             boardView.topAnchor.constraint(equalTo: view.normalizedLayoutGuide.topAnchor, constant: 15),
@@ -126,6 +147,14 @@ class ViewController: UIViewController {
             howToPlayButton.bottomAnchor.constraint(equalTo: view.normalizedLayoutGuide.bottomAnchor, constant: -15),
             howToPlayButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -15),
             howToPlayButton.heightAnchor.constraint(equalToConstant: 14),
+            
+            undoButton.bottomAnchor.constraint(equalTo: view.normalizedLayoutGuide.bottomAnchor, constant: -15),
+            undoButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 15),
+            undoButton.heightAnchor.constraint(equalToConstant: 14),
+
+            redoButton.bottomAnchor.constraint(equalTo: view.normalizedLayoutGuide.bottomAnchor, constant: -15),
+            redoButton.leadingAnchor.constraint(equalTo: undoButton.trailingAnchor, constant: 15),
+            redoButton.heightAnchor.constraint(equalToConstant: 14),
         ])
     }
     
@@ -155,8 +184,20 @@ class ViewController: UIViewController {
 
     @objc
     private func handleStartEndGame() {
-        guard game == nil else {
-            reset()
+        if let game = game {
+            if game.isGamePaused {
+                // Resume a paused game
+                if game.gameBoard.gameResult == .unfinished {
+                    gameResultText = nil
+                    boardView.isEnabled = true
+                }
+                game.resume()
+                updateStartEndButton()
+                updateUndoRedoButtons()
+            }
+            else {
+                reset()
+            }
             return
         }
         
@@ -177,7 +218,17 @@ class ViewController: UIViewController {
     private func handleHowToPlay() {
         print("Explain how to play the game here")
     }
-    
+
+    @objc
+    private func handleUndo() {
+        NotificationCenter.default.post(name: UINotification.undoTapped, object: self, userInfo: nil)
+    }
+
+    @objc
+    private func handleRedo() {
+        NotificationCenter.default.post(name: UINotification.redoTapped, object: self, userInfo: nil)
+    }
+
     private func handleTapped(_ boardLocation: BoardLocation) {
         NotificationCenter.default.post(name: UINotification.gameBoardTapped, object: self,
                                         userInfo: [UINotificationKey.boardLocation: boardLocation])
@@ -188,6 +239,7 @@ class ViewController: UIViewController {
     private func reset() {
         game = nil
         updateStartEndButton()
+        updateUndoRedoButtons()
         setPlayerButtons(enabled: true)
         boardView.reset()
         rotationMapView.update(boardContent: [])
@@ -222,7 +274,11 @@ class ViewController: UIViewController {
 
     private func updateStartEndButton() {
         if let _ = game {
-            if let gameResultText = gameResultText {
+            if game?.isGamePaused ?? false {
+                startEndButton.backgroundColor = UIColor.green
+                startEndButton.setTitle(resumeGameText, for: .normal)
+            }
+            else if let gameResultText = gameResultText {
                 startEndButton.backgroundColor = UIColor.yellow
                 startEndButton.setTitle(gameResultText, for: .normal)
             }
@@ -235,6 +291,11 @@ class ViewController: UIViewController {
             startEndButton.backgroundColor = UIColor.green
             startEndButton.setTitle(startGameText, for: .normal)
         }
+    }
+    
+    private func updateUndoRedoButtons() {
+        undoButton.isEnabled = game?.hasUndo ?? false
+        redoButton.isEnabled = game?.hasRedo ?? false
     }
 
     private func getGameResultText(forWinner winner: GamePiece?) -> String {
@@ -261,6 +322,8 @@ class ViewController: UIViewController {
                 return symbol.rawValue
             }
             boardView.update(boardContent: boardContent)
+            updateStartEndButton()
+            updateUndoRedoButtons()
         } catch {}
     }
 
@@ -271,6 +334,7 @@ class ViewController: UIViewController {
         gameResultText = getGameResultText(forWinner: gameResult.winningSymbol)
         boardView.isEnabled = false
         updateStartEndButton()
+        updateUndoRedoButtons()
     }
 
     @objc
@@ -280,6 +344,7 @@ class ViewController: UIViewController {
         gameResultText = gameErrorText
         boardView.isEnabled = false
         updateStartEndButton()
+        updateUndoRedoButtons()
     }
 }
 
@@ -288,6 +353,7 @@ class ViewController: UIViewController {
 private let humanIsPlayerXText = NSLocalizedString("You are X", comment: "Human is Player X label text")
 private let humanIsPlayerOText = NSLocalizedString("You are O", comment: "Human is Player O label text")
 private let startGameText = NSLocalizedString("Start Game", comment: "Start game button text")
+private let resumeGameText = NSLocalizedString("Resume Game", comment: "Resume game button text")
 private let endGameText = NSLocalizedString("End Game", comment: "End game button text")
 private let gameOverText = NSLocalizedString("Game Over", comment: "Game Over")
 private let youWonText = NSLocalizedString("You Won!", comment: "You Won")
@@ -295,11 +361,16 @@ private let youLostText = NSLocalizedString("You Lost.", comment: "You Lost")
 private let youTiedText = NSLocalizedString("You Tied.", comment: "You tied")
 private let gameErrorText = NSLocalizedString("Game Error", comment: "Game Error")
 private let okButtonTitle = NSLocalizedString("Ok", comment: "Ok button text")
+private let howToPlayButtonTitle = NSLocalizedString("How to Play", comment: "How to Play button text")
+private let undoButtonTitle = NSLocalizedString("Undo", comment: "Undo button text")
+private let redoButtonTitle = NSLocalizedString("Redo", comment: "Redo button text")
 
 // MARK: - Notifications
 
 struct UINotification {
     static let gameBoardTapped = NSNotification.Name("gameBoardTapped")
+    static let undoTapped = NSNotification.Name("undoTapped")
+    static let redoTapped = NSNotification.Name("redoTapped")
 }
 
 // MARK: - Notification Keys

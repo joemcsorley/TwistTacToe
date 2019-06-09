@@ -39,6 +39,7 @@ struct PlayerNotification {
 // MARK: - Notification Keys
 
 struct PlayerNotificationKey {
+    static let boardLocation = "boardLocation"
     static let updatedBoard = "updatedBoard"
     static let error = "error"
 }

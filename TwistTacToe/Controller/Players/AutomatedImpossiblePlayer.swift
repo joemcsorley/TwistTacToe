@@ -34,8 +34,9 @@ class AutomatedImpossiblePlayer: Player {
             DispatchQueue.main.asyncAfter(deadline: DispatchTime.future(seconds: 0.5)) {
                 do {
                     let updatedBoard = try board.newByPlaying(self.symbol, atLocation: bestBoardLocation)
-                    NotificationCenter.default.post(name: PlayerNotification.playerHasPlayed, object: self,
-                                                    userInfo: [PlayerNotificationKey.updatedBoard: updatedBoard])
+                    let userInfo: [AnyHashable: Any] = [PlayerNotificationKey.boardLocation: bestBoardLocation,
+                                                        PlayerNotificationKey.updatedBoard: updatedBoard]
+                    NotificationCenter.default.post(name: PlayerNotification.playerHasPlayed, object: self, userInfo: userInfo)
                 } catch {
                     print("Error: Something went wrong handling automated play for player \(self.symbol)")
                     NotificationCenter.default.post(name: PlayerNotification.playerError, object: self,
