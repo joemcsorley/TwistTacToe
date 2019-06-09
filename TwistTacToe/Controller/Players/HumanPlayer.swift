@@ -6,11 +6,9 @@
 //
 
 import Foundation
-import PromiseKit
 
 class HumanPlayer: Player {
     private(set) var symbol: GamePiece
-    private var resolver: Resolver<GameBoard>?
     private var currentBoard: GameBoard?
     
     init(symbol: GamePiece) {
@@ -19,36 +17,35 @@ class HumanPlayer: Player {
     }
     
     private func setupObservers() {
-        NotificationCenter.default.addObserver(self, selector: #selector(handleGameBoardTapped), name: UINotifications.gameBoardTapped, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(handleGameBoardTapped), name: UINotification.gameBoardTapped, object: nil)
     }
     
     deinit {
         NotificationCenter.default.removeObserver(self)
     }
     
-    func takeTurn(onBoard board: GameBoard, rotationPattern: RotationPattern) -> Promise<GameBoard> {
-        return Promise<GameBoard> { resolver in
-            self.currentBoard = board
-            self.resolver = resolver
-        }
+    func takeTurn(onBoard board: GameBoard, rotationPattern: RotationPattern) {
+        self.currentBoard = board
     }
 
     @objc
     func handleGameBoardTapped(_ notification: NSNotification) {
         guard let board = currentBoard,
-            let boardLocation = notification.userInfo?[UINotificationKeys.boardLocation] as? BoardLocation
+            let boardLocation = notification.userInfo?[UINotificationKey.boardLocation] as? BoardLocation
             else { return }
         do {
             let updatedBoard = try board.newByPlaying(symbol, atLocation: boardLocation)
             currentBoard = nil
-            resolver?.fulfill(updatedBoard)
+            NotificationCenter.default.post(name: PlayerNotification.playerHasPlayed, object: self,
+                                            userInfo: [PlayerNotificationKey.updatedBoard: updatedBoard])
         }
         catch GameBoardError.boardLocationAlreadyOccupied {
             // If the user tapped on an already-occupied space, then ignore it
         }
         catch {
-            print("Error: Something went wrong handling a user tap on the game board")
-            resolver?.reject(error)
+            print("Error: Something went wrong handling a user tap on the game board for player \(symbol)")
+            NotificationCenter.default.post(name: PlayerNotification.playerError, object: self,
+                                            userInfo: [PlayerNotificationKey.error: error])
         }
     }
 }

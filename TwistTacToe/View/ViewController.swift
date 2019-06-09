@@ -40,6 +40,7 @@ class ViewController: UIViewController {
         setupStartEndButton()
         setupHowToPlayButton()
         layout()
+        setupObservers()
     }
     
     private func setupBoard() {
@@ -128,6 +129,16 @@ class ViewController: UIViewController {
         ])
     }
     
+    private func setupObservers() {
+        NotificationCenter.default.addObserver(self, selector: #selector(handleBoardHasBeenUpdated), name: GameNotification.boardHasBeenUpdated, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(handleGameOver), name: GameNotification.gameOver, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(handleGameError), name: GameNotification.gameError, object: nil)
+    }
+    
+    deinit {
+        NotificationCenter.default.removeObserver(self)
+    }
+
     // MARK: - Button Handlers
     
     @objc
@@ -157,14 +168,7 @@ class ViewController: UIViewController {
 //        let playerO: Player = HumanPlayer(symbol: .O)
         gameResultText = nil
         game = GameController(playerX: playerX, playerO: playerO)
-        game?.updatedBoardHandler = handleUpdatedGameBoard
         game?.play()
-            .done { winningSymbol in
-                self.handleGameOver(withWinner: winningSymbol, error: nil)
-            }
-            .catch { error in
-                self.handleGameOver(withWinner: nil, error: error)
-        }
         updateRotationMap()
         updateStartEndButton()
     }
@@ -175,8 +179,8 @@ class ViewController: UIViewController {
     }
     
     private func handleTapped(_ boardLocation: BoardLocation) {
-        NotificationCenter.default.post(name: UINotifications.gameBoardTapped, object: self,
-                                        userInfo: [UINotificationKeys.boardLocation: boardLocation])
+        NotificationCenter.default.post(name: UINotification.gameBoardTapped, object: self,
+                                        userInfo: [UINotificationKey.boardLocation: boardLocation])
     }
 
     // MARK: - Helper Methods
@@ -246,26 +250,36 @@ class ViewController: UIViewController {
         return gameResultText
     }
 
-    // MARK: - Game Callback Methods
+    // MARK: - Notification Handlers
 
-    // Signal the game end and display the result to the user, then reset the game
-    private func handleGameOver(withWinner winner: GamePiece?, error: Error?) {
-        if let error = error {
-            print("Error: Something went wrong during game play: \(error).")
-        }
-        gameResultText = getGameResultText(forWinner: winner)
-        boardView.isEnabled = false
-        updateStartEndButton()
-    }
-    
-    private func handleUpdatedGameBoard(_ board: GameBoard) {
+    @objc
+    private func handleBoardHasBeenUpdated(_ notification: NSNotification) {
+        guard let updatedBoard = notification.userInfo?[GameNotificationKey.updatedBoard] as? GameBoard else { return }
         do {
             let boardContent = try boardRange.map { boardLocation -> String in
-                guard let symbol = try board.gamePiece(atLocation: boardLocation) else { return "" }
+                guard let symbol = try updatedBoard.gamePiece(atLocation: boardLocation) else { return "" }
                 return symbol.rawValue
             }
             boardView.update(boardContent: boardContent)
         } catch {}
+    }
+
+    // Signal the game end and display the result to the user, then reset the game
+    @objc
+    private func handleGameOver(_ notification: NSNotification) {
+        guard let gameResult = notification.userInfo?[GameNotificationKey.gameResult] as? GameResult else { return }
+        gameResultText = getGameResultText(forWinner: gameResult.winningSymbol)
+        boardView.isEnabled = false
+        updateStartEndButton()
+    }
+
+    @objc
+    private func handleGameError(_ notification: NSNotification) {
+        guard let error = notification.userInfo?[GameNotificationKey.error] as? Error else { return }
+        print("Error: Something went wrong during game play: \(error).")
+        gameResultText = gameErrorText
+        boardView.isEnabled = false
+        updateStartEndButton()
     }
 }
 
@@ -279,16 +293,17 @@ private let gameOverText = NSLocalizedString("Game Over", comment: "Game Over")
 private let youWonText = NSLocalizedString("You Won!", comment: "You Won")
 private let youLostText = NSLocalizedString("You Lost.", comment: "You Lost")
 private let youTiedText = NSLocalizedString("You Tied.", comment: "You tied")
+private let gameErrorText = NSLocalizedString("Game Error", comment: "Game Error")
 private let okButtonTitle = NSLocalizedString("Ok", comment: "Ok button text")
 
 // MARK: - Notifications
 
-struct UINotifications {
+struct UINotification {
     static let gameBoardTapped = NSNotification.Name("gameBoardTapped")
 }
 
 // MARK: - Notification Keys
 
-struct UINotificationKeys {
+struct UINotificationKey {
     static let boardLocation = "boardLocation"
 }

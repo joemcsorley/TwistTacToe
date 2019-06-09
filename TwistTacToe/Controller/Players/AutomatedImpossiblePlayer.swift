@@ -17,29 +17,36 @@ class AutomatedImpossiblePlayer: Player {
         self.symbol = symbol
     }
     
-    func takeTurn(onBoard board: GameBoard, rotationPattern: RotationPattern) -> Promise<GameBoard> {
-        return Promise<GameBoard> { resolver in
-            
-            if strategy == nil {
-                strategy = MinimizeLossesStrategy(withRotationPattern: rotationPattern, targetSymbol: symbol)
-            }
-            
-            var bestBoardLocation: BoardLocation
+    func takeTurn(onBoard board: GameBoard, rotationPattern: RotationPattern) {
+        if strategy == nil {
+            strategy = MinimizeLossesStrategy(withRotationPattern: rotationPattern, targetSymbol: symbol)
+        }
+        
+        var bestBoardLocation: BoardLocation
+        do {
             if let boardLocation = try strategy?.bestPath(forBoard: board) {
                 bestBoardLocation = boardLocation
             }
             else {
                 bestBoardLocation = try board.randomOpenLocation()
             }
-            
+
             DispatchQueue.main.asyncAfter(deadline: DispatchTime.future(seconds: 0.5)) {
                 do {
                     let updatedBoard = try board.newByPlaying(self.symbol, atLocation: bestBoardLocation)
-                    resolver.fulfill(updatedBoard)
+                    NotificationCenter.default.post(name: PlayerNotification.playerHasPlayed, object: self,
+                                                    userInfo: [PlayerNotificationKey.updatedBoard: updatedBoard])
                 } catch {
-                    resolver.reject(error)
+                    print("Error: Something went wrong handling automated play for player \(self.symbol)")
+                    NotificationCenter.default.post(name: PlayerNotification.playerError, object: self,
+                                                    userInfo: [PlayerNotificationKey.error: error])
                 }
             }
+
+        } catch {
+            print("Error: Something went wrong handling automated play for player \(self.symbol)")
+            NotificationCenter.default.post(name: PlayerNotification.playerError, object: self,
+                                            userInfo: [PlayerNotificationKey.error: error])
         }
     }
 }
