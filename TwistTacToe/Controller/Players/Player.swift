@@ -9,14 +9,14 @@ import Foundation
 import PromiseKit
 
 protocol Player {
-    var symbol: GamePiece { get }
+    var gamePiece: GamePiece { get }
     func takeTurn(onBoard board: GameBoard, rotationPattern: RotationPattern)
     func handleGameBoardTapped(atLocation boardLocation: BoardLocation)
 }
 
 extension Player {
     var opponentSymbol: GamePiece {
-        return (symbol == .X) ? .O : .X
+        return (gamePiece == .X) ? .O : .X
     }
     
     func handleGameBoardTapped(atLocation boardLocation: BoardLocation) {}
@@ -26,7 +26,7 @@ extension Equatable where Self: Player {}
 
 func ==(lhs: Player, rhs: Player) -> Bool {
     // Players are considered equal if they have the same symbol
-    return lhs.symbol == rhs.symbol
+    return lhs.gamePiece == rhs.gamePiece
 }
 
 // MARK: - Notifications

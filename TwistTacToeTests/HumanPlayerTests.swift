@@ -20,7 +20,7 @@ class HumanPlayerTests: XCTestCase {
                     // Verify that the player played in the correct location
                     XCTAssertEqual(try board.gamePiece(atLocation: tapLocation), .O)
                     // Verify that the player didn't modify the board in any other way
-                    let expectedBoard = try unfinishedBoard1.newByPlaying(player.symbol, atLocation: tapLocation)
+                    let expectedBoard = try unfinishedBoard1.newByPlaying(player.gamePiece, atLocation: tapLocation)
                     XCTAssertEqual(board, expectedBoard)
                     ex.fulfill()
                 } catch {

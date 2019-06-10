@@ -8,22 +8,22 @@
 import Foundation
 
 class AutomatedRandomPlayer: Player {
-    private(set) var symbol: GamePiece
+    private(set) var gamePiece: GamePiece
     
     init(symbol: GamePiece) {
-        self.symbol = symbol
+        self.gamePiece = symbol
     }
 
     func takeTurn(onBoard board: GameBoard, rotationPattern: RotationPattern) {
         DispatchQueue.main.asyncAfter(deadline: DispatchTime.future(seconds: 0.5)) {
             do {
                 let boardLocation = try board.randomOpenLocation()
-                let updatedBoard = try board.newByPlaying(self.symbol, atLocation: boardLocation)
+                let updatedBoard = try board.newByPlaying(self.gamePiece, atLocation: boardLocation)
                 let userInfo: [AnyHashable: Any] = [PlayerNotificationKey.boardLocation: boardLocation,
                                                     PlayerNotificationKey.updatedBoard: updatedBoard]
                 NotificationCenter.default.post(name: PlayerNotification.playerHasPlayed, object: self, userInfo: userInfo)
             } catch {
-                print("Error: Something went wrong handling automated play for player \(self.symbol)")
+                print("Error: Something went wrong handling automated play for player \(self.gamePiece)")
                 NotificationCenter.default.post(name: PlayerNotification.playerError, object: self,
                                                 userInfo: [PlayerNotificationKey.error: error])
             }

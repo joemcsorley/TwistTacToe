@@ -8,11 +8,11 @@
 import Foundation
 
 class HumanPlayer: Player {
-    private(set) var symbol: GamePiece
+    private(set) var gamePiece: GamePiece
     private var currentBoard: GameBoard?
     
     init(symbol: GamePiece) {
-        self.symbol = symbol
+        self.gamePiece = symbol
         setupObservers()
     }
     
@@ -34,7 +34,7 @@ class HumanPlayer: Player {
             let boardLocation = notification.userInfo?[UINotificationKey.boardLocation] as? BoardLocation
             else { return }
         do {
-            let updatedBoard = try board.newByPlaying(symbol, atLocation: boardLocation)
+            let updatedBoard = try board.newByPlaying(gamePiece, atLocation: boardLocation)
             currentBoard = nil
             let userInfo: [AnyHashable: Any] = [PlayerNotificationKey.boardLocation: boardLocation,
                                                 PlayerNotificationKey.updatedBoard: updatedBoard]
@@ -44,7 +44,7 @@ class HumanPlayer: Player {
             // If the user tapped on an already-occupied space, then ignore it
         }
         catch {
-            print("Error: Something went wrong handling a user tap on the game board for player \(symbol)")
+            print("Error: Something went wrong handling a user tap on the game board for player \(gamePiece)")
             NotificationCenter.default.post(name: PlayerNotification.playerError, object: self,
                                             userInfo: [PlayerNotificationKey.error: error])
         }

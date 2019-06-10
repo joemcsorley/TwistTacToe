@@ -20,7 +20,7 @@ class AutomatedRandomPlayerTests: XCTestCase {
                     // Verify that only one of the possible open board locations was played in
                     for boardLocation in openBoardLocations {
                         guard try board.gamePiece(atLocation: boardLocation) == .O else { continue }
-                        let expectedBoard = try unfinishedBoard1.newByPlaying(player.symbol, atLocation: boardLocation)
+                        let expectedBoard = try unfinishedBoard1.newByPlaying(player.gamePiece, atLocation: boardLocation)
                         XCTAssertEqual(board, expectedBoard)
                         break
                     }

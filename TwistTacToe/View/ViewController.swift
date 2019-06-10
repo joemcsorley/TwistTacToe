@@ -14,6 +14,7 @@ class ViewController: UIViewController {
     private let humanIsPlayerXLabel = UILabel()
     private let humanIsPlayerOButton = UIButton()
     private let humanIsPlayerOLabel = UILabel()
+    private let currentPlayerIndicatorLabel = UILabel()
     private let startEndButton = UIButton()
     private let howToPlayButton = UIButton(type: .custom)
     private let undoButton = UIButton(type: .custom)
@@ -39,6 +40,7 @@ class ViewController: UIViewController {
         setupBoard()
         setupRotationMap()
         setupHumanIsPlayerButtons()
+        setupCurrentPlayerIndicator()
         setupStartEndButton()
         setupHowToPlayButton()
         setupUndoRedoButtons()
@@ -69,6 +71,13 @@ class ViewController: UIViewController {
         updatePlayerOrderButtons()
     }
 
+    private func setupCurrentPlayerIndicator() {
+        view.addSubviewWithAutoLayout(currentPlayerIndicatorLabel)
+        currentPlayerIndicatorLabel.font = UIFont.systemFont(ofSize: 12)
+        currentPlayerIndicatorLabel.textColor = UIColor.brown
+        currentPlayerIndicatorLabel.backgroundColor = UIColor.clear
+    }
+    
     private func setupPlayerSelectorButton(_ button: UIButton, handler: Selector) {
         button.setTitleColor(UIColor.black, for: .normal)
         button.titleLabel?.font = UIFont.systemFont(ofSize: 24)
@@ -155,10 +164,14 @@ class ViewController: UIViewController {
             redoButton.bottomAnchor.constraint(equalTo: view.normalizedLayoutGuide.bottomAnchor, constant: -15),
             redoButton.leadingAnchor.constraint(equalTo: undoButton.trailingAnchor, constant: 15),
             redoButton.heightAnchor.constraint(equalToConstant: 14),
+            
+            currentPlayerIndicatorLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 15),
+            currentPlayerIndicatorLabel.bottomAnchor.constraint(equalTo: undoButton.topAnchor, constant: -15),
         ])
     }
     
     private func setupObservers() {
+        NotificationCenter.default.addObserver(self, selector: #selector(handleCurrentPlayer), name: GameNotification.currentPlayer, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(handleBoardHasBeenUpdated), name: GameNotification.boardHasBeenUpdated, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(handleGameOver), name: GameNotification.gameOver, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(handleGameError), name: GameNotification.gameError, object: nil)
@@ -314,6 +327,16 @@ class ViewController: UIViewController {
     // MARK: - Notification Handlers
 
     @objc
+    private func handleCurrentPlayer(_ notification: NSNotification) {
+        if let gamePiece = notification.userInfo?[GameNotificationKey.gamePiece] as? GamePiece {
+            currentPlayerIndicatorLabel.text = String(format: currentPlayerText, gamePiece.rawValue)
+        }
+        else {
+            currentPlayerIndicatorLabel.text = gamePiecesRotateText
+        }
+    }
+    
+    @objc
     private func handleBoardHasBeenUpdated(_ notification: NSNotification) {
         guard let updatedBoard = notification.userInfo?[GameNotificationKey.updatedBoard] as? GameBoard else { return }
         do {
@@ -352,6 +375,8 @@ class ViewController: UIViewController {
 
 private let humanIsPlayerXText = NSLocalizedString("You are X", comment: "Human is Player X label text")
 private let humanIsPlayerOText = NSLocalizedString("You are O", comment: "Human is Player O label text")
+private let currentPlayerText = NSLocalizedString("%@ Plays", comment: "Current Player Indicator text template")
+private let gamePiecesRotateText = NSLocalizedString("Pieces rotate", comment: "Game pieces all rotate text")
 private let startGameText = NSLocalizedString("Start Game", comment: "Start game button text")
 private let resumeGameText = NSLocalizedString("Resume Game", comment: "Resume game button text")
 private let endGameText = NSLocalizedString("End Game", comment: "End game button text")

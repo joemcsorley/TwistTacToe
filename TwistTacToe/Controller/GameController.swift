@@ -89,6 +89,8 @@ class GameController {
     private func handleXPlaysNextState() {
         recordTurnHistory()
         currentPlayer = playerX
+        NotificationCenter.default.post(name: GameNotification.currentPlayer, object: self,
+                                        userInfo: [GameNotificationKey.gamePiece: playerX.gamePiece])
         playerX.takeTurn(onBoard: gameBoard, rotationPattern: rotationPattern)
         gameState = .awaitingXPlay
     }
@@ -96,6 +98,8 @@ class GameController {
     private func handleOPlaysNextState() {
         recordTurnHistory()
         currentPlayer = playerO
+        NotificationCenter.default.post(name: GameNotification.currentPlayer, object: self,
+                                        userInfo: [GameNotificationKey.gamePiece: playerO.gamePiece])
         playerO.takeTurn(onBoard: gameBoard, rotationPattern: rotationPattern)
         gameState = .awaitingOPlay
     }
@@ -159,20 +163,14 @@ class GameController {
         guard hasUndo else { return }
         isGamePaused = true
         playHistoryIndex -= 1
-        gameState = playHistory[playHistoryIndex].gameState
-        gameBoard = playHistory[playHistoryIndex].gameBoard
-        NotificationCenter.default.post(name: GameNotification.boardHasBeenUpdated, object: self,
-                                        userInfo: [GameNotificationKey.updatedBoard: gameBoard])
+        updateGameToCurrentPlayHistoryIndex()
     }
 
     @objc
     func handleRedo(_ notification: NSNotification) {
         guard hasRedo else { return }
         playHistoryIndex += 1
-        gameState = playHistory[playHistoryIndex].gameState
-        gameBoard = playHistory[playHistoryIndex].gameBoard
-        NotificationCenter.default.post(name: GameNotification.boardHasBeenUpdated, object: self,
-                                        userInfo: [GameNotificationKey.updatedBoard: gameBoard])
+        updateGameToCurrentPlayHistoryIndex()
     }
 
     // MARK: - Helpers
@@ -180,6 +178,21 @@ class GameController {
     private func recordTurnHistory() {
         playHistory.append((gameState: gameState, gameBoard: gameBoard))
         playHistoryIndex = playHistory.count - 1
+    }
+    
+    private func updateGameToCurrentPlayHistoryIndex() {
+        gameState = playHistory[playHistoryIndex].gameState
+        gameBoard = playHistory[playHistoryIndex].gameBoard
+        NotificationCenter.default.post(name: GameNotification.boardHasBeenUpdated, object: self,
+                                        userInfo: [GameNotificationKey.updatedBoard: gameBoard])
+        NotificationCenter.default.post(name: GameNotification.currentPlayer, object: self,
+                                        userInfo: currentPlayerUserInfo(forGameState: gameState))
+    }
+    
+    private func currentPlayerUserInfo(forGameState gameState: GameState) -> [AnyHashable: Any] {
+        if gameState == .xPlaysNext { return [GameNotificationKey.gamePiece: GamePiece.X] }
+        else if gameState == .oPlaysNext { return [GameNotificationKey.gamePiece: GamePiece.O] }
+        else { return [:] }
     }
 }
 
@@ -197,6 +210,7 @@ private enum GameState {
 // MARK: - Notifications
 
 struct GameNotification {
+    static let currentPlayer = NSNotification.Name("currentPlayer")
     static let boardHasBeenUpdated = NSNotification.Name("boardHasBeenUpdated")
     static let gameOver = NSNotification.Name("gameOver")
     static let gameError = NSNotification.Name("gameError")
@@ -205,6 +219,7 @@ struct GameNotification {
 // MARK: - Notification Keys
 
 struct GameNotificationKey {
+    static let gamePiece = "gamePiece"
     static let updatedBoard = "updatedBoard"
     static let gameResult = "gameResult"
     static let error = "error"
