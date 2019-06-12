@@ -105,15 +105,11 @@ class GameController {
     }
 
     private func handleAwaitingXPlay() {
-        NotificationCenter.default.post(name: GameNotification.boardHasBeenUpdated, object: self,
-                                        userInfo: [GameNotificationKey.updatedBoard: gameBoard])
         gameState = .oPlaysNext
         advanceGameState()
     }
 
     private func handleAwaitingOPlay() {
-        NotificationCenter.default.post(name: GameNotification.boardHasBeenUpdated, object: self,
-                                        userInfo: [GameNotificationKey.updatedBoard: gameBoard])
         gameState = .boardNeedsRotation
         DispatchQueue.main.asyncAfter(deadline: DispatchTime.future(seconds: 0.4)) {
             self.advanceGameState()
@@ -127,13 +123,13 @@ class GameController {
                                         userInfo: [GameNotificationKey.updatedBoard: gameBoard])
         if gameBoard.gameResult == .unfinished {
             gameState = .xPlaysNext
-            advanceGameState()
         }
         else {
             NotificationCenter.default.post(name: GameNotification.gameOver, object: self,
                                             userInfo: [GameNotificationKey.gameResult: gameBoard.gameResult])
             gameState = .gameOver
         }
+        advanceGameState()
     }
 
     // MARK: - Notification Handlers

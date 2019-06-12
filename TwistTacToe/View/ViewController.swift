@@ -358,6 +358,7 @@ class ViewController: UIViewController {
         boardView.isEnabled = false
         updateStartEndButton()
         updateUndoRedoButtons()
+        currentPlayerIndicatorLabel.text = gameOverText
     }
 
     @objc
@@ -376,7 +377,7 @@ class ViewController: UIViewController {
 private let humanIsPlayerXText = NSLocalizedString("You are X", comment: "Human is Player X label text")
 private let humanIsPlayerOText = NSLocalizedString("You are O", comment: "Human is Player O label text")
 private let currentPlayerText = NSLocalizedString("%@ Plays", comment: "Current Player Indicator text template")
-private let gamePiecesRotateText = NSLocalizedString("Pieces rotate", comment: "Game pieces all rotate text")
+private let gamePiecesRotateText = NSLocalizedString("Pieces move", comment: "Game pieces all rotate text")
 private let startGameText = NSLocalizedString("Start Game", comment: "Start game button text")
 private let resumeGameText = NSLocalizedString("Resume Game", comment: "Resume game button text")
 private let endGameText = NSLocalizedString("End Game", comment: "End game button text")

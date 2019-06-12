@@ -9,44 +9,37 @@ import XCTest
 @testable import TwistTacToe
 
 class GameControllerTests: XCTestCase {
-    var boardHandlerQueue: [(GameBoard) -> Void] = []
+    var notificationHandlerQueue: [(NSNotification) -> Void] = []
     
     override func setUp() {
-        boardHandlerQueue = []
+        notificationHandlerQueue = []
+        observeGameNotifications()
     }
     
-    func testSuccessfulTurnCycle() {
-        let ex = self.expectation()
-        let playerX = HumanPlayer(symbol: .X)
-        let playerO = HumanPlayer(symbol: .O)
-        let game = GameController(playerX: playerX, playerO: playerO, rotationPattern: testRotationPattern!)
-        game.updatedBoardHandler = testNextQueuedBoardHandler(_:)
-        // Verify that X plays, O plays, and the board is rotated properly
-        boardHandlerQueue.append(verifyGamePieceLocations([(7, .X)], thenTapLocation: 4, inGame: game))
-        boardHandlerQueue.append(verifyGamePieceLocations([(4, .O)]))
-        boardHandlerQueue.append(verifyGamePieceLocations([(4, .X), (8, .O)], thenFulfill: ex))
-        _ = game.play()
-        game.handleGameBoardTapped(atLocation: 7)
-        ex.assertCompletion()
+    override func tearDown() {
+        NotificationCenter.default.removeObserver(self)
     }
-    
+
     func testInvalidPlayTerminatesGame() {
         let ex = self.expectation()
         let playerX = HumanPlayer(symbol: .X)
         let playerO = HumanPlayer(symbol: .O)
         let game = GameController(playerX: playerX, playerO: playerO, rotationPattern: testRotationPattern!)
-        game.updatedBoardHandler = testNextQueuedBoardHandler(_:)
-        // Verify that O's invalid play throws an appropriate error
-        boardHandlerQueue.append(verifyGamePieceLocations([(3, .X)], thenTapLocation: 22, inGame: game))
-        game.play()
-            .done { _ in
-                XCTFail()
+        let invalidTapLocation = 22
+        
+        notificationHandlerQueue.append { (notification) in
+            // Verify the first player is X, then initiate X's (invalid) play
+            self.verifyCurrentPlayerNotification(notification, withGamePiece: .X) {
+                self.tapGameBoard(atLocation: invalidTapLocation)
             }
-            .catch { error in
-                XCTAssertEqual(error as? GameBoardError, GameBoardError.invalidBoardLocation)
+        }
+        notificationHandlerQueue.append { (notification) in
+            // Verify an invalidBoardLocation error occurs
+            self.verifyGameErrorNotification(notification, withError: GameBoardError.invalidBoardLocation) {
                 ex.fulfill()
             }
-        game.handleGameBoardTapped(atLocation: 3)
+        }
+        game.play()
         ex.assertCompletion()
     }
 
@@ -55,16 +48,45 @@ class GameControllerTests: XCTestCase {
         let playerX = HumanPlayer(symbol: .X)
         let playerO = HumanPlayer(symbol: .O)
         let game = GameController(playerX: playerX, playerO: playerO, rotationPattern: testRotationPattern!)
-        game.initialGameBoard = { return winningXBoard1 }
-        game.play()
-            .done { winningSymbol in
-                XCTAssertEqual(winningSymbol, .X)
+        game.initialGameBoard = { return self.xWinsInLocation2Board }
+        let xTapLocation: BoardLocation = 2
+        let xRotatedLocation: BoardLocation = 5
+        let oTapLocation: BoardLocation = 4
+        let oRotatedLocation: BoardLocation = 7
+
+        notificationHandlerQueue.append { (notification) in
+            // Verify the first player is X, then initiate X's play
+            self.verifyCurrentPlayerNotification(notification, withGamePiece: .X) {
+                self.tapGameBoard(atLocation: xTapLocation)
+            }
+        }
+        notificationHandlerQueue.append { (notification) in
+            // Verify the board reflects X's play
+            self.verifyUpdatedBoardNotification(notification, withGamePieceLocations: [(xTapLocation, .X)])
+        }
+        notificationHandlerQueue.append { (notification) in
+            // Verify the next player is O, then initiate O's play
+            self.verifyCurrentPlayerNotification(notification, withGamePiece: .O) {
+                self.tapGameBoard(atLocation: oTapLocation)
+            }
+        }
+        notificationHandlerQueue.append { (notification) in
+            // Verify the board reflects O's play
+            self.verifyUpdatedBoardNotification(notification, withGamePieceLocations: [(oTapLocation, .O)])
+        }
+        notificationHandlerQueue.append { (notification) in
+            // Verify the board is rotated
+            self.verifyUpdatedBoardNotification(notification, withGamePieceLocations: [(xRotatedLocation, .X), (oRotatedLocation, .O)])
+        }
+        notificationHandlerQueue.append { (notification) in
+            // Verify X is declared the winner
+            self.verifyGameOverNotification(notification, withGameResult: .X) {
                 ex.fulfill()
             }
-            .catch { error in
-                XCTFail()
-            }
-        ex.assertCompletion()
+        }
+
+        game.play()
+        ex.assertCompletion(withinTimeout: 2)
     }
 
     func testGameDeclaresTie() {
@@ -72,16 +94,44 @@ class GameControllerTests: XCTestCase {
         let playerX = HumanPlayer(symbol: .X)
         let playerO = HumanPlayer(symbol: .O)
         let game = GameController(playerX: playerX, playerO: playerO, rotationPattern: testRotationPattern!)
-        game.initialGameBoard = { return tiedBoard1 }
-        game.play()
-            .done { winningSymbol in
-                XCTAssertEqual(winningSymbol, nil)
+        game.initialGameBoard = { return self.tiedBoard }
+        let xTapLocation: BoardLocation = 7
+        let xRotatedLocation: BoardLocation = 2
+        let oTapLocation: BoardLocation = 8
+        let oRotatedLocation: BoardLocation = 0
+        
+        notificationHandlerQueue.append { (notification) in
+            // Verify the first player is X, then initiate X's play
+            self.verifyCurrentPlayerNotification(notification, withGamePiece: .X) {
+                self.tapGameBoard(atLocation: xTapLocation)
+            }
+        }
+        notificationHandlerQueue.append { (notification) in
+            // Verify the board reflects X's play
+            self.verifyUpdatedBoardNotification(notification, withGamePieceLocations: [(xTapLocation, .X)])
+        }
+        notificationHandlerQueue.append { (notification) in
+            // Verify the next player is O, then initiate O's play
+            self.verifyCurrentPlayerNotification(notification, withGamePiece: .O) {
+                self.tapGameBoard(atLocation: oTapLocation)
+            }
+        }
+        notificationHandlerQueue.append { (notification) in
+            // Verify the board reflects O's play
+            self.verifyUpdatedBoardNotification(notification, withGamePieceLocations: [(oTapLocation, .O)])
+        }
+        notificationHandlerQueue.append { (notification) in
+            // Verify the board is rotated
+            self.verifyUpdatedBoardNotification(notification, withGamePieceLocations: [(xRotatedLocation, .X), (oRotatedLocation, .O)])
+        }
+        notificationHandlerQueue.append { (notification) in
+            // Verify that a tie is declared
+            self.verifyGameOverNotification(notification, withGameResult: .tie) {
                 ex.fulfill()
             }
-            .catch { error in
-                XCTFail()
         }
-        ex.assertCompletion()
+        game.play()
+        ex.assertCompletion(withinTimeout: 2)
     }
 
     // MARK: - Helpers
@@ -89,49 +139,100 @@ class GameControllerTests: XCTestCase {
     private var testRotationPattern: RotationPattern? = {
         do {
             return try RotationPattern(withMapping: [
-                4, 5, 1,
-                2, 7, 3,
-                0, 6, 8])
+                0, 3, 6,
+                1, 4, 7,
+                2, 5, 8])
         }
         catch {
             return nil
         }
     }()
+    
+    let xWinsInLocation2Board = GameBoard.newWithPattern([
+        _X, _X, __,
+        _O, __, __,
+        _O, __, __
+    ])
 
-    // Each time this is called it pops the first board handler off the queue and executes it.
-    private func testNextQueuedBoardHandler(_ updatedBoard: GameBoard) -> Void {
-        guard let boardHandler = boardHandlerQueue.first else { return }
-        _ = boardHandlerQueue.remove(at: 0)
-        boardHandler(updatedBoard)
+    let tiedBoard = GameBoard.newWithPattern([
+        _X, __, _X,
+        _O, _X, _O,
+        _O, __, __
+    ])
+
+    private func verifyCurrentPlayerNotification(_ notification: NSNotification,
+                                                 withGamePiece expectedGamePiece: GamePiece,
+                                                 thenExecute completionBlock: () -> Void) {
+        XCTAssertEqual(notification.name, GameNotification.currentPlayer)
+        let gamePiece = notification.userInfo?[GameNotificationKey.gamePiece] as? GamePiece
+        XCTAssertEqual(gamePiece, expectedGamePiece)
+        completionBlock()
     }
     
-    private func verifyGamePieceLocations(_ gamePieceLocationPairs: [GamePieceLocationPair],
-                                  thenTapLocation tapLocation: BoardLocation? = nil,
-                                  inGame game: GameController? = nil,
-                                  thenFulfill expectation: XCTestExpectation? = nil) -> (GameBoard) -> Void {
-        return { updatedBoard in
-            do {
-                // Verify that all expected symbols are at their expected board locations
-                try gamePieceLocationPairs.forEach {
-                    let gamePieceAtLocation = try updatedBoard.gamePiece(atLocation: $0.boardLocation)
-                    XCTAssertEqual(gamePieceAtLocation, $0.symbol)
-                }
-                // Tap the next board location (on behalf of the next player)
-                if let tapLocation = tapLocation, let game = game {
-                    DispatchQueue.main.async {
-                        game.handleGameBoardTapped(atLocation: tapLocation)
-                    }
-                }
-                // Fulfill the expectation
-                if let ex = expectation {
-                    ex.fulfill()
-                }
-            }
-            catch {
-                XCTFail()
-            }
+    private func tapGameBoard(atLocation boardLocation: BoardLocation) {
+        DispatchQueue.main.async {
+            NotificationCenter.default.post(name: UINotification.gameBoardTapped, object: self,
+                                            userInfo: [UINotificationKey.boardLocation: boardLocation])
         }
+    }
+    
+    private func verifyUpdatedBoardNotification(_ notification: NSNotification,
+                                                withGamePieceLocations expectedGamePieceLocations: [GamePieceLocationPair],
+                                                thenExecute completionBlock: () -> Void = {}) {
+        XCTAssertEqual(notification.name, GameNotification.boardHasBeenUpdated)
+        guard let updatedBoard = notification.userInfo?[GameNotificationKey.updatedBoard] as? GameBoard else {
+            XCTFail()
+            return
+        }
+        // Verify that all expected game pieces are at their expected board locations
+        do {
+            try expectedGamePieceLocations.forEach {
+                let gamePieceAtLocation = try updatedBoard.gamePiece(atLocation: $0.boardLocation)
+                XCTAssertEqual(gamePieceAtLocation, $0.gamePiece)
+            }
+        } catch {
+            XCTFail()
+        }
+        completionBlock()
+    }
+    
+    private func verifyGameErrorNotification(_ notification: NSNotification,
+                                             withError expectedError: Error,
+                                             thenExecute completionBlock: () -> Void) {
+        XCTAssertEqual(notification.name, GameNotification.gameError)
+        guard let error = notification.userInfo?[GameNotificationKey.error] as? Error else {
+            XCTFail()
+            return
+        }
+        XCTAssertEqual(error.localizedDescription, expectedError.localizedDescription)
+        completionBlock()
+    }
+
+    private func verifyGameOverNotification(_ notification: NSNotification,
+                                            withGameResult expectedGameResult: GameResult,
+                                            thenExecute completionBlock: () -> Void) {
+        XCTAssertEqual(notification.name, GameNotification.gameOver)
+        guard let gameResult = notification.userInfo?[GameNotificationKey.gameResult] as? GameResult else {
+            XCTFail()
+            return
+        }
+        XCTAssertEqual(gameResult, expectedGameResult)
+        completionBlock()
+    }
+
+    private func observeGameNotifications() {
+        NotificationCenter.default.addObserver(self, selector: #selector(handleGameNotification), name: GameNotification.currentPlayer, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(handleGameNotification), name: GameNotification.boardHasBeenUpdated, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(handleGameNotification), name: GameNotification.gameOver, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(handleGameNotification), name: GameNotification.gameError, object: nil)
+    }
+
+    @objc
+    func handleGameNotification(_ notification: NSNotification) {
+        guard notificationHandlerQueue.count > 0 else { return }
+        let notificationHandler = notificationHandlerQueue.remove(at: 0)
+        notificationHandler(notification)
     }
 }
 
-typealias GamePieceLocationPair = (boardLocation: BoardLocation, symbol: GamePiece)
+typealias GamePieceLocationPair = (boardLocation: BoardLocation, gamePiece: GamePiece)
