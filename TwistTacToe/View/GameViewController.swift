@@ -6,6 +6,8 @@
 //
 
 import UIKit
+import RxSwift
+import RxCocoa
 
 class ViewController: UIViewController {
     private let boardView = TappableBoardView(withFontSize: 64)
@@ -26,6 +28,8 @@ class ViewController: UIViewController {
     private var game: GameController?
     private var gameResultText: String?
     
+    private let disposeBag = DisposeBag()
+    
     // MARK: - Lifecycle / Setup Methods
     
     override func viewDidLoad() {
@@ -45,7 +49,6 @@ class ViewController: UIViewController {
         setupHowToPlayButton()
         setupUndoRedoButtons()
         layout()
-        setupObservers()
     }
     
     private func setupBoard() {
@@ -170,17 +173,6 @@ class ViewController: UIViewController {
         ])
     }
     
-    private func setupObservers() {
-        NotificationCenter.default.addObserver(self, selector: #selector(handleCurrentPlayer), name: GameNotification.currentPlayer, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(handleBoardHasBeenUpdated), name: GameNotification.boardHasBeenUpdated, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(handleGameOver), name: GameNotification.gameOver, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(handleGameError), name: GameNotification.gameError, object: nil)
-    }
-    
-    deinit {
-        NotificationCenter.default.removeObserver(self)
-    }
-
     // MARK: - Button Handlers
     
     @objc
@@ -221,7 +213,7 @@ class ViewController: UIViewController {
 //        let playerX: Player = HumanPlayer(symbol: .X)
 //        let playerO: Player = HumanPlayer(symbol: .O)
         gameResultText = nil
-        game = GameController(playerX: playerX, playerO: playerO)
+        game = newGame(withPlayerX: playerX, playerO: playerO)
         game?.play()
         updateRotationMap()
         updateStartEndButton()
@@ -234,20 +226,31 @@ class ViewController: UIViewController {
 
     @objc
     private func handleUndo() {
-        NotificationCenter.default.post(name: UINotification.undoTapped, object: self, userInfo: nil)
+        game?.undo()
     }
 
     @objc
     private func handleRedo() {
-        NotificationCenter.default.post(name: UINotification.redoTapped, object: self, userInfo: nil)
+        game?.redo()
     }
 
     private func handleTapped(_ boardLocation: BoardLocation) {
-        NotificationCenter.default.post(name: UINotification.gameBoardTapped, object: self,
-                                        userInfo: [UINotificationKey.boardLocation: boardLocation])
+        game?.handleGameBoardTapped(atLocation: boardLocation)
     }
 
     // MARK: - Helper Methods
+    
+    private func newGame(withPlayerX playerX: Player, playerO: Player) -> GameController {
+        let game = GameController(playerX: playerX, playerO: playerO)
+        game.gameStatePublisher.subscribe(
+            onNext: handleChanged(gameState:),
+            onError: handleGameError(_:),
+            onCompleted: nil,
+            onDisposed: nil)
+        .disposed(by: disposeBag)
+        game.updatedBoardPublisher.subscribe(onNext: handleChanged(gameBoard:)).disposed(by: disposeBag)
+        return game
+    }
     
     private func reset() {
         game = nil
@@ -324,21 +327,9 @@ class ViewController: UIViewController {
         return gameResultText
     }
 
-    // MARK: - Notification Handlers
+    // MARK: - Game Event Handlers
 
-    @objc
-    private func handleCurrentPlayer(_ notification: NSNotification) {
-        if let gamePiece = notification.userInfo?[GameNotificationKey.gamePiece] as? GamePiece {
-            currentPlayerIndicatorLabel.text = String(format: currentPlayerText, gamePiece.rawValue)
-        }
-        else {
-            currentPlayerIndicatorLabel.text = gamePiecesRotateText
-        }
-    }
-    
-    @objc
-    private func handleBoardHasBeenUpdated(_ notification: NSNotification) {
-        guard let updatedBoard = notification.userInfo?[GameNotificationKey.updatedBoard] as? GameBoard else { return }
+    private func handleChanged(gameBoard updatedBoard: GameBoard) {
         do {
             let boardContent = try boardRange.map { boardLocation -> String in
                 guard let symbol = try updatedBoard.gamePiece(atLocation: boardLocation) else { return "" }
@@ -349,22 +340,32 @@ class ViewController: UIViewController {
             updateUndoRedoButtons()
         } catch {}
     }
-
-    // Signal the game end and display the result to the user, then reset the game
-    @objc
-    private func handleGameOver(_ notification: NSNotification) {
-        guard let gameResult = notification.userInfo?[GameNotificationKey.gameResult] as? GameResult else { return }
-        gameResultText = getGameResultText(forWinner: gameResult.winningSymbol)
+    
+    private func handleChanged(gameState: GameState) {
+        switch gameState {
+        case .xPlaysNext: fallthrough
+        case .awaitingXPlay:
+            currentPlayerIndicatorLabel.text = String(format: currentPlayerText, "X")
+        case .oPlaysNext: fallthrough
+        case .awaitingOPlay:
+            currentPlayerIndicatorLabel.text = String(format: currentPlayerText, "O")
+        case .boardNeedsRotation:
+            currentPlayerIndicatorLabel.text = gamePiecesRotateText
+        case.gameOver:
+            handleGameOver()
+        }
+    }
+    
+    // Signal the game end, display the result to the user, then reset the game
+    private func handleGameOver() {
+        gameResultText = getGameResultText(forWinner: game?.gameBoard.gameResult.winningSymbol)
         boardView.isEnabled = false
         updateStartEndButton()
         updateUndoRedoButtons()
         currentPlayerIndicatorLabel.text = gameOverText
     }
 
-    @objc
-    private func handleGameError(_ notification: NSNotification) {
-        guard let error = notification.userInfo?[GameNotificationKey.error] as? Error else { return }
-        print("Error: Something went wrong during game play: \(error).")
+    private func handleGameError(_ error: Error) {
         gameResultText = gameErrorText
         boardView.isEnabled = false
         updateStartEndButton()
@@ -395,8 +396,6 @@ private let redoButtonTitle = NSLocalizedString("Redo", comment: "Redo button te
 
 struct UINotification {
     static let gameBoardTapped = NSNotification.Name("gameBoardTapped")
-    static let undoTapped = NSNotification.Name("undoTapped")
-    static let redoTapped = NSNotification.Name("redoTapped")
 }
 
 // MARK: - Notification Keys

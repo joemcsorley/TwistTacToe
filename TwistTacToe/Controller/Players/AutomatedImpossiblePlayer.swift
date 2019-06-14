@@ -6,13 +6,15 @@
 //
 
 import Foundation
-import PromiseKit
+import RxSwift
+import RxCocoa
 
 class AutomatedImpossiblePlayer: Player {
     private(set) var gamePiece: GamePiece
     private let boardLocationCenter = 4
     private var strategy: MinimizeLossesStrategy?
-    
+    let turnPublisher = PublishSubject<TurnResult>()
+
     init(symbol: GamePiece) {
         self.gamePiece = symbol
     }
@@ -34,20 +36,16 @@ class AutomatedImpossiblePlayer: Player {
             DispatchQueue.main.asyncAfter(deadline: DispatchTime.future(seconds: 0.5)) {
                 do {
                     let updatedBoard = try board.newByPlaying(self.gamePiece, atLocation: bestBoardLocation)
-                    let userInfo: [AnyHashable: Any] = [PlayerNotificationKey.boardLocation: bestBoardLocation,
-                                                        PlayerNotificationKey.updatedBoard: updatedBoard]
-                    NotificationCenter.default.post(name: PlayerNotification.playerHasPlayed, object: self, userInfo: userInfo)
+                    self.turnPublisher.onNext((bestBoardLocation, updatedBoard))
                 } catch {
                     print("Error: Something went wrong handling automated play for player \(self.gamePiece)")
-                    NotificationCenter.default.post(name: PlayerNotification.playerError, object: self,
-                                                    userInfo: [PlayerNotificationKey.error: error])
+                    self.turnPublisher.onError(error)
                 }
             }
 
         } catch {
             print("Error: Something went wrong handling automated play for player \(self.gamePiece)")
-            NotificationCenter.default.post(name: PlayerNotification.playerError, object: self,
-                                            userInfo: [PlayerNotificationKey.error: error])
+            self.turnPublisher.onError(error)
         }
     }
 }

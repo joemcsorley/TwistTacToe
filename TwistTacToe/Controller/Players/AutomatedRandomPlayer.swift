@@ -6,10 +6,13 @@
 //
 
 import Foundation
+import RxSwift
+import RxCocoa
 
 class AutomatedRandomPlayer: Player {
     private(set) var gamePiece: GamePiece
-    
+    let turnPublisher = PublishSubject<TurnResult>()
+
     init(symbol: GamePiece) {
         self.gamePiece = symbol
     }
@@ -19,13 +22,10 @@ class AutomatedRandomPlayer: Player {
             do {
                 let boardLocation = try board.randomOpenLocation()
                 let updatedBoard = try board.newByPlaying(self.gamePiece, atLocation: boardLocation)
-                let userInfo: [AnyHashable: Any] = [PlayerNotificationKey.boardLocation: boardLocation,
-                                                    PlayerNotificationKey.updatedBoard: updatedBoard]
-                NotificationCenter.default.post(name: PlayerNotification.playerHasPlayed, object: self, userInfo: userInfo)
+                self.turnPublisher.onNext((boardLocation, updatedBoard))
             } catch {
                 print("Error: Something went wrong handling automated play for player \(self.gamePiece)")
-                NotificationCenter.default.post(name: PlayerNotification.playerError, object: self,
-                                                userInfo: [PlayerNotificationKey.error: error])
+                self.turnPublisher.onError(error)
             }
         }
         return

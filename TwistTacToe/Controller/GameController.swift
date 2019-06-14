@@ -6,6 +6,8 @@
 //
 
 import Foundation
+import RxSwift
+import RxCocoa
 
 typealias TurnCompletionHandler = (GameBoard) throws -> Void
 
@@ -20,6 +22,10 @@ class GameController {
     private var playHistoryIndex = 0
     private(set) var isGamePaused = false
     
+    let gameStatePublisher = PublishSubject<GameState>()
+    let updatedBoardPublisher = PublishSubject<GameBoard>()
+    private let disposeBag = DisposeBag()
+
     // Dependency injection for testing
     var initialGameBoard: () -> GameBoard = {
         return GameBoard()
@@ -36,18 +42,18 @@ class GameController {
         self.rotationPattern = rotationPattern
         self.playerX = playerX
         self.playerO = playerO
-        setupObservers()
+        setupPlayer(playerX)
+        setupPlayer(playerO)
     }
-    
-    private func setupObservers() {
-        NotificationCenter.default.addObserver(self, selector: #selector(handlePlayerHasPlayed), name: PlayerNotification.playerHasPlayed, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(handlePlayerError), name: PlayerNotification.playerError, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(handleUndo), name: UINotification.undoTapped, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(handleRedo), name: UINotification.redoTapped, object: nil)
-    }
-    
-    deinit {
-        NotificationCenter.default.removeObserver(self)
+
+    private func setupPlayer(_ player: Player) {
+        player.turnPublisher.subscribe(
+            onNext: { turnResult in
+                self.handle(player: player, hasPlayedAtBoardLocation: turnResult.boardLocation, updatedBoard: turnResult.updatedBoard)
+            },
+            onError: { error in
+                self.handle(player: player, error: error)
+            }).disposed(by: disposeBag)
     }
 
     // MARK: - Public interface methods
@@ -64,6 +70,24 @@ class GameController {
             playHistory.removeLast()
         }
         advanceGameState()
+    }
+    
+    func handleGameBoardTapped(atLocation boardLocation: BoardLocation) {
+        if gameState == .awaitingXPlay { playerX.handleGameBoardTapped(atLocation: boardLocation) }
+        else if gameState == .awaitingOPlay { playerO.handleGameBoardTapped(atLocation: boardLocation) }
+    }
+    
+    func undo() {
+        guard hasUndo else { return }
+        isGamePaused = true
+        playHistoryIndex -= 1
+        updateGameToCurrentPlayHistoryIndex()
+    }
+    
+    func redo() {
+        guard hasRedo else { return }
+        playHistoryIndex += 1
+        updateGameToCurrentPlayHistoryIndex()
     }
     
     // MARK: - State Machine
@@ -89,19 +113,17 @@ class GameController {
     private func handleXPlaysNextState() {
         recordTurnHistory()
         currentPlayer = playerX
-        NotificationCenter.default.post(name: GameNotification.currentPlayer, object: self,
-                                        userInfo: [GameNotificationKey.gamePiece: playerX.gamePiece])
         playerX.takeTurn(onBoard: gameBoard, rotationPattern: rotationPattern)
         gameState = .awaitingXPlay
+        gameStatePublisher.onNext(gameState)
     }
 
     private func handleOPlaysNextState() {
         recordTurnHistory()
         currentPlayer = playerO
-        NotificationCenter.default.post(name: GameNotification.currentPlayer, object: self,
-                                        userInfo: [GameNotificationKey.gamePiece: playerO.gamePiece])
         playerO.takeTurn(onBoard: gameBoard, rotationPattern: rotationPattern)
         gameState = .awaitingOPlay
+        gameStatePublisher.onNext(gameState)
     }
 
     private func handleAwaitingXPlay() {
@@ -119,54 +141,30 @@ class GameController {
     private func handleBoardNeedsRotation() {
         recordTurnHistory()
         gameBoard = gameBoard.newByRotating(usingPattern: rotationPattern)
-        NotificationCenter.default.post(name: GameNotification.boardHasBeenUpdated, object: self,
-                                        userInfo: [GameNotificationKey.updatedBoard: gameBoard])
+        updatedBoardPublisher.onNext(gameBoard)
         if gameBoard.gameResult == .unfinished {
             gameState = .xPlaysNext
         }
         else {
-            NotificationCenter.default.post(name: GameNotification.gameOver, object: self,
-                                            userInfo: [GameNotificationKey.gameResult: gameBoard.gameResult])
             gameState = .gameOver
+            recordTurnHistory()
         }
+        gameStatePublisher.onNext(gameState)
         advanceGameState()
     }
 
-    // MARK: - Notification Handlers
+    // MARK: - Player Event Handlers
     
-    @objc
-    func handlePlayerHasPlayed(_ notification: NSNotification) {
-        guard let updatedBoard = notification.userInfo?[PlayerNotificationKey.updatedBoard] as? GameBoard,
-            let player = notification.object as? Player,
-            (gameState == .awaitingXPlay && player == playerX) || (gameState == .awaitingOPlay && player == playerO)
-            else { return }
+    func handle(player: Player, hasPlayedAtBoardLocation boardLocation: BoardLocation, updatedBoard: GameBoard) {
+        guard (gameState == .awaitingXPlay && player == playerX) || (gameState == .awaitingOPlay && player == playerO) else { return }
         gameBoard = updatedBoard
-        NotificationCenter.default.post(name: GameNotification.boardHasBeenUpdated, object: self,
-                                        userInfo: [GameNotificationKey.updatedBoard: gameBoard])
+        updatedBoardPublisher.onNext(gameBoard)
         advanceGameState()
     }
 
-    @objc
-    func handlePlayerError(_ notification: NSNotification) {
-        guard let error = notification.userInfo?[PlayerNotificationKey.error] as? Error else { return }
-        NotificationCenter.default.post(name: GameNotification.gameError, object: self,
-                                        userInfo: [GameNotificationKey.error: error])
+    func handle(player: Player, error: Error) {
+        gameStatePublisher.onError(error)
         gameState = .gameOver
-    }
-
-    @objc
-    func handleUndo(_ notification: NSNotification) {
-        guard hasUndo else { return }
-        isGamePaused = true
-        playHistoryIndex -= 1
-        updateGameToCurrentPlayHistoryIndex()
-    }
-
-    @objc
-    func handleRedo(_ notification: NSNotification) {
-        guard hasRedo else { return }
-        playHistoryIndex += 1
-        updateGameToCurrentPlayHistoryIndex()
     }
 
     // MARK: - Helpers
@@ -179,46 +177,20 @@ class GameController {
     private func updateGameToCurrentPlayHistoryIndex() {
         gameState = playHistory[playHistoryIndex].gameState
         gameBoard = playHistory[playHistoryIndex].gameBoard
-        NotificationCenter.default.post(name: GameNotification.boardHasBeenUpdated, object: self,
-                                        userInfo: [GameNotificationKey.updatedBoard: gameBoard])
-        NotificationCenter.default.post(name: GameNotification.currentPlayer, object: self,
-                                        userInfo: currentPlayerUserInfo(forGameState: gameState))
-    }
-    
-    private func currentPlayerUserInfo(forGameState gameState: GameState) -> [AnyHashable: Any] {
-        if gameState == .xPlaysNext { return [GameNotificationKey.gamePiece: GamePiece.X] }
-        else if gameState == .oPlaysNext { return [GameNotificationKey.gamePiece: GamePiece.O] }
-        else { return [:] }
+        updatedBoardPublisher.onNext(gameBoard)
+        gameStatePublisher.onNext(gameState)
     }
 }
 
 // MARK: - Game State Machine States
 
-private enum GameState {
+enum GameState {
     case xPlaysNext
     case awaitingXPlay
     case oPlaysNext
     case awaitingOPlay
     case boardNeedsRotation
     case gameOver
-}
-
-// MARK: - Notifications
-
-struct GameNotification {
-    static let currentPlayer = NSNotification.Name("currentPlayer")
-    static let boardHasBeenUpdated = NSNotification.Name("boardHasBeenUpdated")
-    static let gameOver = NSNotification.Name("gameOver")
-    static let gameError = NSNotification.Name("gameError")
-}
-
-// MARK: - Notification Keys
-
-struct GameNotificationKey {
-    static let gamePiece = "gamePiece"
-    static let updatedBoard = "updatedBoard"
-    static let gameResult = "gameResult"
-    static let error = "error"
 }
 
 // MARK: - Turn History

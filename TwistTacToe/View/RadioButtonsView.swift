@@ -2,10 +2,12 @@
 //  RadioButtonsView.swift
 //  TwistTacToe
 //
-//  Created by Joe Mcsorley on 6/12/19.
+//  Copyright 2019, Joe McSorley, All rights reserved.
 //
 
 import UIKit
+import RxSwift
+import RxCocoa
 
 class RadioButtonsView: UIView {
     private var numberOfButtons: Int = 1
@@ -37,6 +39,8 @@ private class RadioButtonView: UIView {
     let button = UIButton(type: .custom)
     let label = UILabel()
     let buttonId: Int
+    let tapPublisher = PublishRelay<Int>()
+    let disposeBag = DisposeBag()
 
     private let radioButtonSize: CGFloat = 32
 
@@ -87,19 +91,6 @@ private class RadioButtonView: UIView {
     
     @objc
     private func handleButtonTapped() {
-        NotificationCenter.default.post(name: RadioButtonNotification.buttonTapped, object: self,
-                                        userInfo: [RadioButtonNotificationKey.buttonId: buttonId])
+        tapPublisher.accept(buttonId)
     }
-}
-
-// MARK: - Notifications
-
-struct RadioButtonNotification {
-    static let buttonTapped = NSNotification.Name("buttonTapped")
-}
-
-// MARK: - Notification Keys
-
-struct RadioButtonNotificationKey {
-    static let buttonId = "buttonId"
 }

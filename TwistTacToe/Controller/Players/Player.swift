@@ -6,10 +6,11 @@
 //
 
 import Foundation
-import PromiseKit
+import RxSwift
 
 protocol Player {
     var gamePiece: GamePiece { get }
+    var turnPublisher: PublishSubject<TurnResult> { get }
     func takeTurn(onBoard board: GameBoard, rotationPattern: RotationPattern)
     func handleGameBoardTapped(atLocation boardLocation: BoardLocation)
 }
@@ -18,7 +19,7 @@ extension Player {
     var opponentSymbol: GamePiece {
         return (gamePiece == .X) ? .O : .X
     }
-    
+
     func handleGameBoardTapped(atLocation boardLocation: BoardLocation) {}
 }
 
@@ -29,17 +30,4 @@ func ==(lhs: Player, rhs: Player) -> Bool {
     return lhs.gamePiece == rhs.gamePiece
 }
 
-// MARK: - Notifications
-
-struct PlayerNotification {
-    static let playerHasPlayed = NSNotification.Name("playerHasPlayed")
-    static let playerError = NSNotification.Name("playerError")
-}
-
-// MARK: - Notification Keys
-
-struct PlayerNotificationKey {
-    static let boardLocation = "boardLocation"
-    static let updatedBoard = "updatedBoard"
-    static let error = "error"
-}
+typealias TurnResult = (boardLocation: BoardLocation, updatedBoard: GameBoard)

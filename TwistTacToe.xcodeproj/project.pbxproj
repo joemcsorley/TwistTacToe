@@ -38,6 +38,14 @@
 		D89AEA2122A3585400F59525 /* UIColor+TwistTacToe.swift in Sources */ = {isa = PBXBuildFile; fileRef = D89AEA2022A3585400F59525 /* UIColor+TwistTacToe.swift */; };
 		D89C5BDE22A1C2A900214A24 /* GameControllerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D89C5BDD22A1C2A900214A24 /* GameControllerTests.swift */; };
 		D8B1AD6D22B17D6900421951 /* RadioButtonsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8B1AD6C22B17D6900421951 /* RadioButtonsView.swift */; };
+		D8B1AD7322B2FF4000421951 /* RxBlocking.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D8B1AD6E22B2FF3F00421951 /* RxBlocking.framework */; };
+		D8B1AD7522B2FF4000421951 /* RxCocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D8B1AD7022B2FF4000421951 /* RxCocoa.framework */; };
+		D8B1AD7622B2FF4000421951 /* RxSwift.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D8B1AD7122B2FF4000421951 /* RxSwift.framework */; };
+		D8B1AD7722B2FF4000421951 /* RxAtomic.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D8B1AD7222B2FF4000421951 /* RxAtomic.framework */; };
+		D8B1AD7822B2FF4E00421951 /* RxAtomic.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D8B1AD7222B2FF4000421951 /* RxAtomic.framework */; };
+		D8B1AD7922B2FF4E00421951 /* RxBlocking.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D8B1AD6E22B2FF3F00421951 /* RxBlocking.framework */; };
+		D8B1AD7A22B2FF4E00421951 /* RxCocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D8B1AD7022B2FF4000421951 /* RxCocoa.framework */; };
+		D8B1AD7B22B2FF4E00421951 /* RxSwift.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D8B1AD7122B2FF4000421951 /* RxSwift.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -85,6 +93,11 @@
 		D89AEA2022A3585400F59525 /* UIColor+TwistTacToe.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UIColor+TwistTacToe.swift"; sourceTree = "<group>"; };
 		D89C5BDD22A1C2A900214A24 /* GameControllerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameControllerTests.swift; sourceTree = "<group>"; };
 		D8B1AD6C22B17D6900421951 /* RadioButtonsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RadioButtonsView.swift; sourceTree = "<group>"; };
+		D8B1AD6E22B2FF3F00421951 /* RxBlocking.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = RxBlocking.framework; path = Carthage/Build/iOS/RxBlocking.framework; sourceTree = "<group>"; };
+		D8B1AD6F22B2FF3F00421951 /* RxTest.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = RxTest.framework; path = Carthage/Build/iOS/RxTest.framework; sourceTree = "<group>"; };
+		D8B1AD7022B2FF4000421951 /* RxCocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = RxCocoa.framework; path = Carthage/Build/iOS/RxCocoa.framework; sourceTree = "<group>"; };
+		D8B1AD7122B2FF4000421951 /* RxSwift.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = RxSwift.framework; path = Carthage/Build/iOS/RxSwift.framework; sourceTree = "<group>"; };
+		D8B1AD7222B2FF4000421951 /* RxAtomic.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = RxAtomic.framework; path = Carthage/Build/iOS/RxAtomic.framework; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -93,6 +106,10 @@
 			buildActionMask = 2147483647;
 			files = (
 				D821035622A0815300A8EB74 /* PromiseKit.framework in Frameworks */,
+				D8B1AD7722B2FF4000421951 /* RxAtomic.framework in Frameworks */,
+				D8B1AD7322B2FF4000421951 /* RxBlocking.framework in Frameworks */,
+				D8B1AD7522B2FF4000421951 /* RxCocoa.framework in Frameworks */,
+				D8B1AD7622B2FF4000421951 /* RxSwift.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -101,6 +118,10 @@
 			buildActionMask = 2147483647;
 			files = (
 				D821035E22A1A84D00A8EB74 /* PromiseKit.framework in Frameworks */,
+				D8B1AD7822B2FF4E00421951 /* RxAtomic.framework in Frameworks */,
+				D8B1AD7922B2FF4E00421951 /* RxBlocking.framework in Frameworks */,
+				D8B1AD7A22B2FF4E00421951 /* RxCocoa.framework in Frameworks */,
+				D8B1AD7B22B2FF4E00421951 /* RxSwift.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -200,6 +221,11 @@
 		D821035422A0815300A8EB74 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				D8B1AD7222B2FF4000421951 /* RxAtomic.framework */,
+				D8B1AD6E22B2FF3F00421951 /* RxBlocking.framework */,
+				D8B1AD7022B2FF4000421951 /* RxCocoa.framework */,
+				D8B1AD7122B2FF4000421951 /* RxSwift.framework */,
+				D8B1AD6F22B2FF3F00421951 /* RxTest.framework */,
 				D821035522A0815300A8EB74 /* PromiseKit.framework */,
 			);
 			name = Frameworks;
@@ -245,7 +271,7 @@
 				0B143FDF1F7EE43500D77DD4 /* Sources */,
 				0B143FE01F7EE43500D77DD4 /* Frameworks */,
 				0B143FE11F7EE43500D77DD4 /* Resources */,
-				D821035722A0819D00A8EB74 /* ShellScript */,
+				D821035722A0819D00A8EB74 /* Copy Carthage Frameworks */,
 			);
 			buildRules = (
 			);
@@ -339,7 +365,7 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
-		D821035722A0819D00A8EB74 /* ShellScript */ = {
+		D821035722A0819D00A8EB74 /* Copy Carthage Frameworks */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -348,7 +374,12 @@
 			);
 			inputPaths = (
 				"$(SRCROOT)/Carthage/Build/iOS/PromiseKit.framework",
+				"$(SRCROOT)/Carthage/Build/iOS/RxAtomic.framework",
+				"$(SRCROOT)/Carthage/Build/iOS/RxBlocking.framework",
+				"$(SRCROOT)/Carthage/Build/iOS/RxCocoa.framework",
+				"$(SRCROOT)/Carthage/Build/iOS/RxSwift.framework",
 			);
+			name = "Copy Carthage Frameworks";
 			outputFileListPaths = (
 			);
 			outputPaths = (
