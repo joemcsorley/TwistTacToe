@@ -59,6 +59,7 @@ class GameController {
     // MARK: - Public interface methods
 
     func play() {
+        gameStatePublisher.onNext(gameState)
         advanceGameState()
     }
 
@@ -69,6 +70,7 @@ class GameController {
         while playHistory.count > playHistoryIndex {
             playHistory.removeLast()
         }
+        gameStatePublisher.onNext(gameState)
         advanceGameState()
     }
     
@@ -92,6 +94,11 @@ class GameController {
     
     // MARK: - State Machine
 
+    private func updateAndPublishGameState(_ newGameState: GameState) {
+        gameState = newGameState
+        gameStatePublisher.onNext(gameState)
+    }
+    
     private func advanceGameState() {
         guard !isGamePaused else { return }
         switch gameState {
@@ -114,25 +121,23 @@ class GameController {
         recordTurnHistory()
         currentPlayer = playerX
         playerX.takeTurn(onBoard: gameBoard, rotationPattern: rotationPattern)
-        gameState = .awaitingXPlay
-        gameStatePublisher.onNext(gameState)
+        updateAndPublishGameState(.awaitingXPlay)
     }
 
     private func handleOPlaysNextState() {
         recordTurnHistory()
         currentPlayer = playerO
         playerO.takeTurn(onBoard: gameBoard, rotationPattern: rotationPattern)
-        gameState = .awaitingOPlay
-        gameStatePublisher.onNext(gameState)
+        updateAndPublishGameState(.awaitingOPlay)
     }
 
     private func handleAwaitingXPlay() {
-        gameState = .oPlaysNext
+        updateAndPublishGameState(.oPlaysNext)
         advanceGameState()
     }
 
     private func handleAwaitingOPlay() {
-        gameState = .boardNeedsRotation
+        updateAndPublishGameState(.boardNeedsRotation)
         DispatchQueue.main.asyncAfter(deadline: DispatchTime.future(seconds: 0.4)) {
             self.advanceGameState()
         }
@@ -143,13 +148,12 @@ class GameController {
         gameBoard = gameBoard.newByRotating(usingPattern: rotationPattern)
         updatedBoardPublisher.onNext(gameBoard)
         if gameBoard.gameResult == .unfinished {
-            gameState = .xPlaysNext
+            updateAndPublishGameState(.xPlaysNext)
         }
         else {
-            gameState = .gameOver
+            updateAndPublishGameState(.gameOver)
             recordTurnHistory()
         }
-        gameStatePublisher.onNext(gameState)
         advanceGameState()
     }
 
@@ -175,10 +179,9 @@ class GameController {
     }
     
     private func updateGameToCurrentPlayHistoryIndex() {
-        gameState = playHistory[playHistoryIndex].gameState
         gameBoard = playHistory[playHistoryIndex].gameBoard
         updatedBoardPublisher.onNext(gameBoard)
-        gameStatePublisher.onNext(gameState)
+        updateAndPublishGameState(playHistory[playHistoryIndex].gameState)
     }
 }
 
