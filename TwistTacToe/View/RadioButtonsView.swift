@@ -10,9 +10,11 @@ import RxSwift
 import RxCocoa
 
 class RadioButtonsView: UIView {
-    private var numberOfButtons: Int = 1
-    private var buttons: [UIButton] = []
-    
+    private var numberOfButtons = 1
+    private(set) var selectedButton: Int?
+    private(set) var buttons: [RadioButtonView] = []
+    private let disposeBag = DisposeBag()
+
     // MARK: - Init / Setup
 
     init(numberOfButtons: Int) {
@@ -27,19 +29,50 @@ class RadioButtonsView: UIView {
     }
     
     private func setup() {
-        
+        backgroundColor = UIColor.clear
+        for i in 0..<numberOfButtons {
+            let radioButtonView = RadioButtonView(buttonId: i)
+            radioButtonView.tapPublisher.subscribe(onNext: setSelectedButton(_:)).disposed(by: disposeBag)
+            addSubviewWithAutoLayout(radioButtonView)
+            buttons.append(radioButtonView)
+        }
     }
     
     private func layout() {
-        
+        guard let lastRadioButtonView = buttons.last else { return }
+        var currentTopAnchor: NSLayoutYAxisAnchor = topAnchor
+        var currentTopOffset: CGFloat = 0
+        buttons.forEach { radioButtonView in
+            NSLayoutConstraint.activate([
+                radioButtonView.topAnchor.constraint(equalTo: currentTopAnchor, constant: currentTopOffset),
+                radioButtonView.leadingAnchor.constraint(equalTo: leadingAnchor),
+                radioButtonView.trailingAnchor.constraint(equalTo: trailingAnchor),
+            ])
+            currentTopAnchor = radioButtonView.bottomAnchor
+            currentTopOffset = 8
+        }
+        NSLayoutConstraint.activate([
+            lastRadioButtonView.bottomAnchor.constraint(equalTo: bottomAnchor),
+        ])
+    }
+    
+    // MARK: - Public interface methods
+    
+    func setSelectedButton(_ i: Int) {
+        guard i >= 0 && i < numberOfButtons else { return }
+        buttons.forEach {
+            $0.button.setTitle(" ", for: .normal)
+        }
+        buttons[i].button.setTitle("✓", for: .normal)
+        selectedButton = i
     }
 }
 
-private class RadioButtonView: UIView {
+class RadioButtonView: UIView {
     let button = UIButton(type: .custom)
     let label = UILabel()
     let buttonId: Int
-    let tapPublisher = PublishRelay<Int>()
+    let tapPublisher = PublishSubject<Int>()
     let disposeBag = DisposeBag()
 
     private let radioButtonSize: CGFloat = 32
@@ -58,6 +91,7 @@ private class RadioButtonView: UIView {
     }
     
     private func setup() {
+        backgroundColor = UIColor.clear
         setupButton()
         setupLabel()
     }
@@ -82,15 +116,17 @@ private class RadioButtonView: UIView {
             button.topAnchor.constraint(equalTo: topAnchor),
             button.bottomAnchor.constraint(equalTo: bottomAnchor),
             button.leadingAnchor.constraint(equalTo: leadingAnchor),
-            
-            label.centerYAnchor.constraint(equalTo: button.centerYAnchor),
-            label.leadingAnchor.constraint(equalTo: button.trailingAnchor, constant: 8),
+            button.widthAnchor.constraint(equalToConstant: radioButtonSize),
+            button.heightAnchor.constraint(equalTo: button.widthAnchor),
+
+            label.leadingAnchor.constraint(equalTo: button.trailingAnchor, constant: 15),
             label.trailingAnchor.constraint(equalTo: trailingAnchor),
+            label.centerYAnchor.constraint(equalTo: button.centerYAnchor),
         ])
     }
     
     @objc
     private func handleButtonTapped() {
-        tapPublisher.accept(buttonId)
+        tapPublisher.onNext(buttonId)
     }
 }

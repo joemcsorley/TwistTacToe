@@ -1,5 +1,5 @@
 //
-//  ViewController.swift
+//  GameViewController.swift
 //  TwistTacToe
 //
 //  Copyright 2019, Joe McSorley, All rights reserved.
@@ -9,7 +9,7 @@ import UIKit
 import RxSwift
 import RxCocoa
 
-class ViewController: UIViewController {
+class GameViewController: UIViewController {
     private let boardView = TappableBoardView(withFontSize: 64)
     private let rotationMapView = TappableBoardView(withFontSize: 32)
     private let humanIsPlayerXButton = UIButton()
@@ -27,18 +27,32 @@ class ViewController: UIViewController {
     private var isHumanPlayerX = true
     private var game: GameController?
     private var gameResultText: String?
+    private(set) var playerX: Player = HumanPlayer(symbol: .X)
+    private(set) var playerO: Player = HumanPlayer(symbol: .O)
     
     private let disposeBag = DisposeBag()
     
     // MARK: - Lifecycle / Setup Methods
     
+    init(playerX: Player = HumanPlayer(symbol: .X), playerO: Player = HumanPlayer(symbol: .O)) {
+        self.playerX = playerX
+        self.playerO = playerO
+        super.init(nibName: nil, bundle: nil)
+    }
+
+    required init?(coder aDecoder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         setup()
+        layout()
+        handleStartEndGame()
     }
     
     private func setup() {
-        view.translatesAutoresizingMaskIntoConstraints = false
+//        view.translatesAutoresizingMaskIntoConstraints = false
         view.backgroundColor = UIColor("#FFD9AA")
         
         setupBoard()
@@ -48,7 +62,6 @@ class ViewController: UIViewController {
         setupStartEndButton()
         setupHowToPlayButton()
         setupUndoRedoButtons()
-        layout()
     }
     
     private func setupBoard() {
@@ -201,15 +214,16 @@ class ViewController: UIViewController {
                 updateUndoRedoButtons()
             }
             else {
-                reset()
+                dismiss(animated: true, completion: nil)
+//                reset()
             }
             return
         }
         
         boardView.isEnabled = true
         setPlayerButtons(enabled: false)
-        let playerX: Player = isHumanPlayerX ? HumanPlayer(symbol: .X) : AutomatedRandomPlayer(symbol: .X)
-        let playerO: Player = isHumanPlayerX ? AutomatedRandomPlayer(symbol: .O) : HumanPlayer(symbol: .O)
+//        let playerX: Player = isHumanPlayerX ? HumanPlayer(symbol: .X) : AutomatedRandomPlayer(symbol: .X)
+//        let playerO: Player = isHumanPlayerX ? AutomatedRandomPlayer(symbol: .O) : HumanPlayer(symbol: .O)
 //        let playerX: Player = HumanPlayer(symbol: .X)
 //        let playerO: Player = HumanPlayer(symbol: .O)
         gameResultText = nil
@@ -315,16 +329,8 @@ class ViewController: UIViewController {
     }
 
     private func getGameResultText(forWinner winner: GamePiece?) -> String {
-        guard let winner = winner else { return youTiedText }
-        
-        var gameResultText: String
-        if isHumanPlayerX {
-            gameResultText = (winner == .X ? youWonText : youLostText)
-        }
-        else {
-            gameResultText = (winner == .O ? youWonText : youLostText)
-        }
-        return gameResultText
+        guard let winner = winner else { return tieText }
+        return winner == .X ? xWinsText : oWinsText
     }
 
     // MARK: - Game Event Handlers
@@ -383,9 +389,9 @@ private let startGameText = NSLocalizedString("Start Game", comment: "Start game
 private let resumeGameText = NSLocalizedString("Resume Game", comment: "Resume game button text")
 private let endGameText = NSLocalizedString("End Game", comment: "End game button text")
 private let gameOverText = NSLocalizedString("Game Over", comment: "Game Over")
-private let youWonText = NSLocalizedString("You Won!", comment: "You Won")
-private let youLostText = NSLocalizedString("You Lost.", comment: "You Lost")
-private let youTiedText = NSLocalizedString("You Tied.", comment: "You tied")
+private let xWinsText = NSLocalizedString("Player X Wins!", comment: "Player X Wins")
+private let oWinsText = NSLocalizedString("Player O Wins!", comment: "Player O Wins")
+private let tieText = NSLocalizedString("You Tied.", comment: "You tied")
 private let gameErrorText = NSLocalizedString("Game Error", comment: "Game Error")
 private let okButtonTitle = NSLocalizedString("Ok", comment: "Ok button text")
 private let howToPlayButtonTitle = NSLocalizedString("How to Play", comment: "How to Play button text")
