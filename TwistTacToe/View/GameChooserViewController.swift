@@ -14,6 +14,7 @@ class GameChooserViewController: UIViewController {
     private let onePlayerButton = UIButton()
     private let twoPlayerButton = UIButton()
     private let playerChooserButtons = RadioButtonsView(numberOfButtons: 2)
+    private let howToPlayButton = UIButton(type: .custom)
     private let humanPlayerIsXButtonId = 0
     private let humanPlayerIsOButtonId = 1
 
@@ -28,6 +29,7 @@ class GameChooserViewController: UIViewController {
         setupOnePlayerButton()
         setupTwoPlayerButton()
         setupPlayerChooserButtons()
+        setupHowToPlayButton()
     }
 
     private func setupOnePlayerButton() {
@@ -55,6 +57,14 @@ class GameChooserViewController: UIViewController {
         view.addSubviewWithAutoLayout(playerChooserButtons)
     }
     
+    private func setupHowToPlayButton() {
+        howToPlayButton.setTitle(howToPlayButtonTitle, for: .normal)
+        howToPlayButton.setTitleColor(UIColor.brown, for: .normal)
+        howToPlayButton.titleLabel?.font = UIFont.systemFont(ofSize: 12, weight: .bold)
+        howToPlayButton.addTarget(self, action: #selector(handleHowToPlay), for: .touchUpInside)
+        view.addSubviewWithAutoLayout(howToPlayButton)
+    }
+    
     private func layout() {
         NSLayoutConstraint.activate([
             onePlayerButton.topAnchor.constraint(equalTo: view.normalizedLayoutGuide.topAnchor, constant: 50),
@@ -66,6 +76,9 @@ class GameChooserViewController: UIViewController {
             twoPlayerButton.topAnchor.constraint(equalTo: playerChooserButtons.bottomAnchor, constant: 30),
             twoPlayerButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 30),
             twoPlayerButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -30),
+            howToPlayButton.bottomAnchor.constraint(equalTo: view.normalizedLayoutGuide.bottomAnchor, constant: -15),
+            howToPlayButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -15),
+            howToPlayButton.heightAnchor.constraint(equalToConstant: 14),
         ])
     }
     
@@ -85,6 +98,11 @@ class GameChooserViewController: UIViewController {
     private func handleTwoPlayerTapped() {
         present(GameViewController(playerX: HumanPlayer(symbol: .X), playerO: HumanPlayer(symbol: .O)), animated: true, completion: nil)
     }
+
+    @objc
+    private func handleHowToPlay() {
+        print("Explain how to play the game here")
+    }
 }
 
 // MARK: - Localizable Strings
@@ -93,3 +111,4 @@ private let onePlayerButtonTitle = NSLocalizedString("One Player", comment: "One
 private let twoPlayerButtonTitle = NSLocalizedString("Two Player", comment: "Two Player button title")
 private let humanIsPlayerXText = NSLocalizedString("You are X", comment: "Human is Player X label text")
 private let humanIsPlayerOText = NSLocalizedString("You are O", comment: "Human is Player O label text")
+private let howToPlayButtonTitle = NSLocalizedString("How to Play", comment: "How to Play button text")

@@ -17,7 +17,7 @@ class GameController {
     private(set) var currentPlayer: Player?
     let rotationPattern: RotationPattern
     private(set) lazy var gameBoard = initialGameBoard()
-    private var gameState: GameState = .xPlaysNext
+    private(set) var gameState: GameState = .xPlaysNext
     private var playHistory: [TurnHistory] = []
     private var playHistoryIndex = 0
     private(set) var isGamePaused = false
@@ -180,8 +180,9 @@ class GameController {
     
     private func updateGameToCurrentPlayHistoryIndex() {
         gameBoard = playHistory[playHistoryIndex].gameBoard
+        gameState = playHistory[playHistoryIndex].gameState
         updatedBoardPublisher.onNext(gameBoard)
-        updateAndPublishGameState(playHistory[playHistoryIndex].gameState)
+        gameStatePublisher.onNext(gameState)
     }
 }
 

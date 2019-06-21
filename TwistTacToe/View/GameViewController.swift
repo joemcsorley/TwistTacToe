@@ -12,29 +12,22 @@ import RxCocoa
 class GameViewController: UIViewController {
     private let boardView = TappableBoardView(withFontSize: 64)
     private let rotationMapView = TappableBoardView(withFontSize: 32)
-    private let humanIsPlayerXButton = UIButton()
-    private let humanIsPlayerXLabel = UILabel()
-    private let humanIsPlayerOButton = UIButton()
-    private let humanIsPlayerOLabel = UILabel()
     private let currentPlayerIndicatorLabel = UILabel()
     private let startEndButton = UIButton()
-    private let howToPlayButton = UIButton(type: .custom)
     private let undoButton = UIButton(type: .custom)
     private let redoButton = UIButton(type: .custom)
 
     private let radioButtonSize: CGFloat = 32
     
-    private var isHumanPlayerX = true
     private var game: GameController?
-    private var gameResultText: String?
-    private(set) var playerX: Player = HumanPlayer(symbol: .X)
-    private(set) var playerO: Player = HumanPlayer(symbol: .O)
+    private(set) var playerX: Player
+    private(set) var playerO: Player
     
     private let disposeBag = DisposeBag()
     
     // MARK: - Lifecycle / Setup Methods
     
-    init(playerX: Player = HumanPlayer(symbol: .X), playerO: Player = HumanPlayer(symbol: .O)) {
+    init(playerX: Player, playerO: Player) {
         self.playerX = playerX
         self.playerO = playerO
         super.init(nibName: nil, bundle: nil)
@@ -48,19 +41,16 @@ class GameViewController: UIViewController {
         super.viewDidLoad()
         setup()
         layout()
-        handleStartEndGame()
+        startNewGame()
     }
     
     private func setup() {
-//        view.translatesAutoresizingMaskIntoConstraints = false
         view.backgroundColor = UIColor("#FFD9AA")
         
         setupBoard()
         setupRotationMap()
-        setupHumanIsPlayerButtons()
         setupCurrentPlayerIndicator()
-        setupStartEndButton()
-        setupHowToPlayButton()
+        setupResumeEndButton()
         setupUndoRedoButtons()
     }
     
@@ -71,20 +61,6 @@ class GameViewController: UIViewController {
 
     private func setupRotationMap() {
         view.addSubviewWithAutoLayout(rotationMapView)
-    }
-
-    private func setupHumanIsPlayerButtons() {
-        view.addSubviewWithAutoLayout(humanIsPlayerXButton)
-        view.addSubviewWithAutoLayout(humanIsPlayerXLabel)
-        view.addSubviewWithAutoLayout(humanIsPlayerOButton)
-        view.addSubviewWithAutoLayout(humanIsPlayerOLabel)
-
-        humanIsPlayerXLabel.text = humanIsPlayerXText
-        humanIsPlayerOLabel.text = humanIsPlayerOText
-        
-        setupPlayerSelectorButton(humanIsPlayerXButton, handler: #selector(handleHumanIsPlayerX))
-        setupPlayerSelectorButton(humanIsPlayerOButton, handler: #selector(handleHumanIsPlayerO))
-        updatePlayerOrderButtons()
     }
 
     private func setupCurrentPlayerIndicator() {
@@ -102,20 +78,12 @@ class GameViewController: UIViewController {
         button.layer.cornerRadius = radioButtonSize / 2
     }
     
-    private func setupStartEndButton() {
+    private func setupResumeEndButton() {
         startEndButton.setTitleColor(UIColor.black, for: .normal)
-        startEndButton.addTarget(self, action: #selector(handleStartEndGame), for: .touchUpInside)
+        startEndButton.addTarget(self, action: #selector(handleResumeEndGame), for: .touchUpInside)
         startEndButton.layer.cornerRadius = 4
         updateStartEndButton()
         view.addSubviewWithAutoLayout(startEndButton)
-    }
-
-    private func setupHowToPlayButton() {
-        howToPlayButton.setTitle(howToPlayButtonTitle, for: .normal)
-        howToPlayButton.setTitleColor(UIColor.brown, for: .normal)
-        howToPlayButton.titleLabel?.font = UIFont.systemFont(ofSize: 12, weight: .bold)
-        howToPlayButton.addTarget(self, action: #selector(handleHowToPlay), for: .touchUpInside)
-        view.addSubviewWithAutoLayout(howToPlayButton)
     }
 
     private func setupUndoRedoButtons() {
@@ -143,36 +111,14 @@ class GameViewController: UIViewController {
             boardView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -15),
             
             rotationMapView.topAnchor.constraint(equalTo: boardView.bottomAnchor, constant: 30),
-            rotationMapView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -8),
+            rotationMapView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -15),
             rotationMapView.widthAnchor.constraint(equalTo: boardView.widthAnchor, multiplier: 0.4),
             
-            // Human is player 1 row
-            humanIsPlayerXButton.topAnchor.constraint(equalTo: boardView.bottomAnchor, constant: 30),
-            humanIsPlayerXButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 15),
-            humanIsPlayerXButton.widthAnchor.constraint(equalToConstant: radioButtonSize),
-            humanIsPlayerXButton.heightAnchor.constraint(equalTo: humanIsPlayerXButton.widthAnchor),
-            humanIsPlayerXLabel.leadingAnchor.constraint(equalTo: humanIsPlayerXButton.trailingAnchor, constant: 8),
-            humanIsPlayerXLabel.trailingAnchor.constraint(equalTo: rotationMapView.leadingAnchor, constant: -15),
-            humanIsPlayerXLabel.centerYAnchor.constraint(equalTo: humanIsPlayerXButton.centerYAnchor),
-            
-            // Human is player 2 row
-            humanIsPlayerOButton.topAnchor.constraint(equalTo: humanIsPlayerXButton.bottomAnchor, constant: 15),
-            humanIsPlayerOButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 15),
-            humanIsPlayerOButton.widthAnchor.constraint(equalToConstant: radioButtonSize),
-            humanIsPlayerOButton.heightAnchor.constraint(equalTo: humanIsPlayerXButton.widthAnchor),
-            humanIsPlayerOLabel.leadingAnchor.constraint(equalTo: humanIsPlayerOButton.trailingAnchor, constant: 8),
-            humanIsPlayerOLabel.trailingAnchor.constraint(equalTo: rotationMapView.leadingAnchor, constant: -15),
-            humanIsPlayerOLabel.centerYAnchor.constraint(equalTo: humanIsPlayerOButton.centerYAnchor),
-
-            startEndButton.topAnchor.constraint(equalTo: humanIsPlayerOLabel.bottomAnchor, constant: 30),
+            startEndButton.bottomAnchor.constraint(equalTo: rotationMapView.bottomAnchor),
             startEndButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 15),
             startEndButton.trailingAnchor.constraint(equalTo: rotationMapView.leadingAnchor, constant: -15),
             startEndButton.heightAnchor.constraint(equalToConstant: radioButtonSize),
 
-            howToPlayButton.bottomAnchor.constraint(equalTo: view.normalizedLayoutGuide.bottomAnchor, constant: -15),
-            howToPlayButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -15),
-            howToPlayButton.heightAnchor.constraint(equalToConstant: 14),
-            
             undoButton.bottomAnchor.constraint(equalTo: view.normalizedLayoutGuide.bottomAnchor, constant: -15),
             undoButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 15),
             undoButton.heightAnchor.constraint(equalToConstant: 14),
@@ -189,53 +135,21 @@ class GameViewController: UIViewController {
     // MARK: - Button Handlers
     
     @objc
-    private func handleHumanIsPlayerX() {
-        isHumanPlayerX = true
-        updatePlayerOrderButtons()
-    }
-
-    @objc
-    private func handleHumanIsPlayerO() {
-        isHumanPlayerX = false
-        updatePlayerOrderButtons()
-    }
-
-    @objc
-    private func handleStartEndGame() {
-        if let game = game {
-            if game.isGamePaused {
-                // Resume a paused game
-                if game.gameBoard.gameResult == .unfinished {
-                    gameResultText = nil
-                    boardView.isEnabled = true
-                }
-                game.resume()
-                updateStartEndButton()
-                updateUndoRedoButtons()
+    private func handleResumeEndGame() {
+        guard let game = game else { return }
+        if game.isGamePaused {
+            // Resume a paused game
+            if game.gameBoard.gameResult == .unfinished {
+                boardView.isEnabled = true
             }
-            else {
-                dismiss(animated: true, completion: nil)
-//                reset()
-            }
-            return
+            game.resume()
+            updateStartEndButton()
+            updateUndoRedoButtons()
         }
-        
-        boardView.isEnabled = true
-        setPlayerButtons(enabled: false)
-//        let playerX: Player = isHumanPlayerX ? HumanPlayer(symbol: .X) : AutomatedRandomPlayer(symbol: .X)
-//        let playerO: Player = isHumanPlayerX ? AutomatedRandomPlayer(symbol: .O) : HumanPlayer(symbol: .O)
-//        let playerX: Player = HumanPlayer(symbol: .X)
-//        let playerO: Player = HumanPlayer(symbol: .O)
-        gameResultText = nil
-        game = newGame(withPlayerX: playerX, playerO: playerO)
-        game?.play()
-        updateRotationMap()
-        updateStartEndButton()
-    }
-
-    @objc
-    private func handleHowToPlay() {
-        print("Explain how to play the game here")
+        else {
+            // End game
+            dismiss(animated: true, completion: nil)
+        }
     }
 
     @objc
@@ -254,6 +168,14 @@ class GameViewController: UIViewController {
 
     // MARK: - Helper Methods
     
+    private func startNewGame() {
+        boardView.isEnabled = true
+        game = newGame(withPlayerX: playerX, playerO: playerO)
+        game?.play()
+        updateRotationMap()
+        updateStartEndButton()
+    }
+    
     private func newGame(withPlayerX playerX: Player, playerO: Player) -> GameController {
         let game = GameController(playerX: playerX, playerO: playerO)
         game.gameStatePublisher.subscribe(
@@ -270,18 +192,10 @@ class GameViewController: UIViewController {
         game = nil
         updateStartEndButton()
         updateUndoRedoButtons()
-        setPlayerButtons(enabled: true)
         boardView.reset()
         rotationMapView.update(boardContent: [])
     }
     
-    private func setPlayerButtons(enabled isEnabled: Bool) {
-        humanIsPlayerXButton.isEnabled = isEnabled
-        humanIsPlayerOButton.isEnabled = isEnabled
-        humanIsPlayerXButton.setTitleColor((isEnabled ? UIColor.black : UIColor.lightGray), for: .normal)
-        humanIsPlayerOButton.setTitleColor((isEnabled ? UIColor.black : UIColor.lightGray), for: .normal)
-    }
-
     private func updateRotationMap() {
         guard let rotationPattern = game?.rotationPattern else { return }
         var rotationBoardContent: [String] = []
@@ -291,35 +205,15 @@ class GameViewController: UIViewController {
         rotationMapView.update(boardContent: rotationBoardContent)
     }
     
-    private func updatePlayerOrderButtons() {
-        if isHumanPlayerX {
-            humanIsPlayerXButton.setTitle("✓", for: .normal)
-            humanIsPlayerOButton.setTitle("", for: .normal)
-        }
-        else {
-            humanIsPlayerXButton.setTitle("", for: .normal)
-            humanIsPlayerOButton.setTitle("✓", for: .normal)
-        }
-    }
-
     private func updateStartEndButton() {
-        if let _ = game {
-            if game?.isGamePaused ?? false {
-                startEndButton.backgroundColor = UIColor.green
-                startEndButton.setTitle(resumeGameText, for: .normal)
-            }
-            else if let gameResultText = gameResultText {
-                startEndButton.backgroundColor = UIColor.yellow
-                startEndButton.setTitle(gameResultText, for: .normal)
-            }
-            else {
-                startEndButton.backgroundColor = UIColor.red
-                startEndButton.setTitle(endGameText, for: .normal)
-            }
+        guard let game = game else { return }
+        if game.isGamePaused && game.gameState != .gameOver {
+            startEndButton.backgroundColor = UIColor.green
+            startEndButton.setTitle(resumeGameText, for: .normal)
         }
         else {
-            startEndButton.backgroundColor = UIColor.green
-            startEndButton.setTitle(startGameText, for: .normal)
+            startEndButton.backgroundColor = UIColor.red
+            startEndButton.setTitle(endGameText, for: .normal)
         }
     }
     
@@ -362,17 +256,16 @@ class GameViewController: UIViewController {
         }
     }
     
-    // Signal the game end, display the result to the user, then reset the game
+    // Signal the game end, and display the result to the user
     private func handleGameOver() {
-        gameResultText = getGameResultText(forWinner: game?.gameBoard.gameResult.winningSymbol)
+        currentPlayerIndicatorLabel.text = getGameResultText(forWinner: game?.gameBoard.gameResult.winningSymbol)
         boardView.isEnabled = false
         updateStartEndButton()
         updateUndoRedoButtons()
-        currentPlayerIndicatorLabel.text = gameOverText
     }
 
     private func handleGameError(_ error: Error) {
-        gameResultText = gameErrorText
+        currentPlayerIndicatorLabel.text = gameErrorText
         boardView.isEnabled = false
         updateStartEndButton()
         updateUndoRedoButtons()
@@ -385,16 +278,13 @@ private let humanIsPlayerXText = NSLocalizedString("You are X", comment: "Human 
 private let humanIsPlayerOText = NSLocalizedString("You are O", comment: "Human is Player O label text")
 private let currentPlayerText = NSLocalizedString("%@ Plays", comment: "Current Player Indicator text template")
 private let gamePiecesRotateText = NSLocalizedString("Pieces move", comment: "Game pieces all rotate text")
-private let startGameText = NSLocalizedString("Start Game", comment: "Start game button text")
 private let resumeGameText = NSLocalizedString("Resume Game", comment: "Resume game button text")
 private let endGameText = NSLocalizedString("End Game", comment: "End game button text")
-private let gameOverText = NSLocalizedString("Game Over", comment: "Game Over")
 private let xWinsText = NSLocalizedString("Player X Wins!", comment: "Player X Wins")
 private let oWinsText = NSLocalizedString("Player O Wins!", comment: "Player O Wins")
 private let tieText = NSLocalizedString("You Tied.", comment: "You tied")
 private let gameErrorText = NSLocalizedString("Game Error", comment: "Game Error")
 private let okButtonTitle = NSLocalizedString("Ok", comment: "Ok button text")
-private let howToPlayButtonTitle = NSLocalizedString("How to Play", comment: "How to Play button text")
 private let undoButtonTitle = NSLocalizedString("Undo", comment: "Undo button text")
 private let redoButtonTitle = NSLocalizedString("Redo", comment: "Redo button text")
 
