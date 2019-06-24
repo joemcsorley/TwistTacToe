@@ -17,12 +17,16 @@ class GameController {
     private(set) var currentPlayer: Player?
     let rotationPattern: RotationPattern
     private(set) lazy var gameBoard = initialGameBoard()
-    private(set) var gameState: GameState = .xPlaysNext
+    private(set) var gameState = BehaviorSubject<GameState>(value: .xPlaysNext)
+    // Convenience accessor.  An errored gameState is treated like a finished game.
+    var gameStateValue: GameState {
+        do { return try gameState.value() }
+        catch { return .gameOver }
+    }
     private var playHistory: [TurnHistory] = []
     private var playHistoryIndex = 0
     private(set) var isGamePaused = false
     
-    let gameStatePublisher = PublishSubject<GameState>()
     let updatedBoardPublisher = PublishSubject<GameBoard>()
     private let disposeBag = DisposeBag()
 
@@ -52,14 +56,13 @@ class GameController {
                 self.handle(player: player, hasPlayedAtBoardLocation: turnResult.boardLocation, updatedBoard: turnResult.updatedBoard)
             },
             onError: { error in
-                self.handle(player: player, error: error)
+                self.gameState.onError(error)
             }).disposed(by: disposeBag)
     }
 
     // MARK: - Public interface methods
 
     func play() {
-        gameStatePublisher.onNext(gameState)
         advanceGameState()
     }
 
@@ -70,13 +73,12 @@ class GameController {
         while playHistory.count > playHistoryIndex {
             playHistory.removeLast()
         }
-        gameStatePublisher.onNext(gameState)
-        advanceGameState()
+        play()
     }
     
     func handleGameBoardTapped(atLocation boardLocation: BoardLocation) {
-        if gameState == .awaitingXPlay { playerX.handleGameBoardTapped(atLocation: boardLocation) }
-        else if gameState == .awaitingOPlay { playerO.handleGameBoardTapped(atLocation: boardLocation) }
+        if gameStateValue == .awaitingXPlay { playerX.handleGameBoardTapped(atLocation: boardLocation) }
+        else if gameStateValue == .awaitingOPlay { playerO.handleGameBoardTapped(atLocation: boardLocation) }
     }
     
     func undo() {
@@ -94,14 +96,9 @@ class GameController {
     
     // MARK: - State Machine
 
-    private func updateAndPublishGameState(_ newGameState: GameState) {
-        gameState = newGameState
-        gameStatePublisher.onNext(gameState)
-    }
-    
     private func advanceGameState() {
         guard !isGamePaused else { return }
-        switch gameState {
+        switch gameStateValue {
         case .xPlaysNext:
             handleXPlaysNextState()
         case .awaitingXPlay:
@@ -121,23 +118,23 @@ class GameController {
         recordTurnHistory()
         currentPlayer = playerX
         playerX.takeTurn(onBoard: gameBoard, rotationPattern: rotationPattern)
-        updateAndPublishGameState(.awaitingXPlay)
+        gameState.onNext(.awaitingXPlay)
     }
 
     private func handleOPlaysNextState() {
         recordTurnHistory()
         currentPlayer = playerO
         playerO.takeTurn(onBoard: gameBoard, rotationPattern: rotationPattern)
-        updateAndPublishGameState(.awaitingOPlay)
+        gameState.onNext(.awaitingOPlay)
     }
 
     private func handleAwaitingXPlay() {
-        updateAndPublishGameState(.oPlaysNext)
+        gameState.onNext(.oPlaysNext)
         advanceGameState()
     }
 
     private func handleAwaitingOPlay() {
-        updateAndPublishGameState(.boardNeedsRotation)
+        gameState.onNext(.boardNeedsRotation)
         DispatchQueue.main.asyncAfter(deadline: DispatchTime.future(seconds: 0.4)) {
             self.advanceGameState()
         }
@@ -148,10 +145,10 @@ class GameController {
         gameBoard = gameBoard.newByRotating(usingPattern: rotationPattern)
         updatedBoardPublisher.onNext(gameBoard)
         if gameBoard.gameResult == .unfinished {
-            updateAndPublishGameState(.xPlaysNext)
+            gameState.onNext(.xPlaysNext)
         }
         else {
-            updateAndPublishGameState(.gameOver)
+            gameState.onNext(.gameOver)
             recordTurnHistory()
         }
         advanceGameState()
@@ -160,29 +157,23 @@ class GameController {
     // MARK: - Player Event Handlers
     
     func handle(player: Player, hasPlayedAtBoardLocation boardLocation: BoardLocation, updatedBoard: GameBoard) {
-        guard (gameState == .awaitingXPlay && player == playerX) || (gameState == .awaitingOPlay && player == playerO) else { return }
+        guard (gameStateValue == .awaitingXPlay && player == playerX) || (gameStateValue == .awaitingOPlay && player == playerO) else { return }
         gameBoard = updatedBoard
         updatedBoardPublisher.onNext(gameBoard)
         advanceGameState()
     }
 
-    func handle(player: Player, error: Error) {
-        gameStatePublisher.onError(error)
-        gameState = .gameOver
-    }
-
     // MARK: - Helpers
     
     private func recordTurnHistory() {
-        playHistory.append((gameState: gameState, gameBoard: gameBoard))
+        playHistory.append((gameState: gameStateValue, gameBoard: gameBoard))
         playHistoryIndex = playHistory.count - 1
     }
     
     private func updateGameToCurrentPlayHistoryIndex() {
         gameBoard = playHistory[playHistoryIndex].gameBoard
-        gameState = playHistory[playHistoryIndex].gameState
+        gameState.onNext(playHistory[playHistoryIndex].gameState)
         updatedBoardPublisher.onNext(gameBoard)
-        gameStatePublisher.onNext(gameState)
     }
 }
 

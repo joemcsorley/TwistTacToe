@@ -178,14 +178,36 @@ class GameViewController: UIViewController {
     
     private func newGame(withPlayerX playerX: Player, playerO: Player) -> GameController {
         let game = GameController(playerX: playerX, playerO: playerO)
-        game.gameStatePublisher.subscribe(
-            onNext: handleChanged(gameState:),
+        
+        bindCurrentPlayerIndicatorToGameState(ofGame: game)
+        
+        // Handle end-of-game, and game error conditions
+        game.gameState.subscribe(
+            onNext: handleGameOver(gameState:),
             onError: handleGameError(_:),
             onCompleted: nil,
             onDisposed: nil)
         .disposed(by: disposeBag)
+        
         game.updatedBoardPublisher.subscribe(onNext: handleChanged(gameBoard:)).disposed(by: disposeBag)
         return game
+    }
+    
+    private func bindCurrentPlayerIndicatorToGameState(ofGame game: GameController) {
+        game.gameState.map { (gameState) -> String in
+            switch gameState {
+            case .xPlaysNext: fallthrough
+            case .awaitingXPlay:
+                return String(format: currentPlayerText, "X")
+            case .oPlaysNext: fallthrough
+            case .awaitingOPlay:
+                return String(format: currentPlayerText, "O")
+            case .boardNeedsRotation:
+                return gamePiecesRotateText
+            case.gameOver:
+                return self.getGameResultText(forWinner: game.gameBoard.gameResult.winningSymbol)
+            }
+        }.bind(to: currentPlayerIndicatorLabel.rx.text).disposed(by: disposeBag)
     }
     
     private func reset() {
@@ -207,7 +229,7 @@ class GameViewController: UIViewController {
     
     private func updateStartEndButton() {
         guard let game = game else { return }
-        if game.isGamePaused && game.gameState != .gameOver {
+        if game.isGamePaused && game.gameStateValue != .gameOver {
             startEndButton.backgroundColor = UIColor.green
             startEndButton.setTitle(resumeGameText, for: .normal)
         }
@@ -241,34 +263,21 @@ class GameViewController: UIViewController {
         } catch {}
     }
     
-    private func handleChanged(gameState: GameState) {
-        switch gameState {
-        case .xPlaysNext: fallthrough
-        case .awaitingXPlay:
-            currentPlayerIndicatorLabel.text = String(format: currentPlayerText, "X")
-        case .oPlaysNext: fallthrough
-        case .awaitingOPlay:
-            currentPlayerIndicatorLabel.text = String(format: currentPlayerText, "O")
-        case .boardNeedsRotation:
-            currentPlayerIndicatorLabel.text = gamePiecesRotateText
-        case.gameOver:
-            handleGameOver()
-        }
+    private func handleGameOver(gameState: GameState) {
+        guard gameState == .gameOver else { return }
+        boardView.isEnabled = false
+        updateStartEndButton()
+        updateUndoRedoButtons()
     }
     
-    // Signal the game end, and display the result to the user
-    private func handleGameOver() {
-        currentPlayerIndicatorLabel.text = getGameResultText(forWinner: game?.gameBoard.gameResult.winningSymbol)
-        boardView.isEnabled = false
-        updateStartEndButton()
-        updateUndoRedoButtons()
-    }
-
     private func handleGameError(_ error: Error) {
-        currentPlayerIndicatorLabel.text = gameErrorText
-        boardView.isEnabled = false
-        updateStartEndButton()
-        updateUndoRedoButtons()
+        let errorAlert = UIAlertController(title: errorAlertTitle, message: error.localizedDescription, preferredStyle: .alert)
+        errorAlert.addAction(UIAlertAction(title: okButtonTitle, style: .default) { action in
+            DispatchQueue.main.async {
+                self.dismiss(animated: true, completion: nil)
+            }
+        })
+        present(errorAlert, animated: true, completion: nil)
     }
 }
 
@@ -284,9 +293,10 @@ private let xWinsText = NSLocalizedString("Player X Wins!", comment: "Player X W
 private let oWinsText = NSLocalizedString("Player O Wins!", comment: "Player O Wins")
 private let tieText = NSLocalizedString("You Tied.", comment: "You tied")
 private let gameErrorText = NSLocalizedString("Game Error", comment: "Game Error")
-private let okButtonTitle = NSLocalizedString("Ok", comment: "Ok button text")
+private let okButtonTitle = NSLocalizedString("Ok", comment: "Ok button title")
 private let undoButtonTitle = NSLocalizedString("Undo", comment: "Undo button text")
 private let redoButtonTitle = NSLocalizedString("Redo", comment: "Redo button text")
+private let errorAlertTitle = NSLocalizedString("A fatal error occurred", comment: "error alert title")
 
 // MARK: - Notifications
 

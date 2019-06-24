@@ -20,7 +20,7 @@ class GameControllerTests: XCTestCase {
     func testInvalidPlayTerminatesGame() {
         let ex = self.expectation()
         let invalidTapLocation = 22
-        let game = newObservedGame()
+        var game: GameController!
         
         eventHandlerQueue.append { gameState in
             // Verify the first player is X
@@ -39,6 +39,7 @@ class GameControllerTests: XCTestCase {
             }
         }
         
+        game = newObservedGame()
         game.play()
         ex.assertCompletion()
     }
@@ -49,7 +50,7 @@ class GameControllerTests: XCTestCase {
         let xRotatedLocation: BoardLocation = 5
         let oTapLocation: BoardLocation = 4
         let oRotatedLocation: BoardLocation = 7
-        let game = newObservedGame(withInitialGameBoard: self.xWinsInLocation2Board)
+        var game: GameController!
 
         eventHandlerQueue.append { gameState in
             // Verify the first player is X
@@ -95,6 +96,7 @@ class GameControllerTests: XCTestCase {
             }
         }
 
+        game = newObservedGame(withInitialGameBoard: self.xWinsInLocation2Board)
         game.play()
         ex.assertCompletion(withinTimeout: 2)
     }
@@ -105,7 +107,7 @@ class GameControllerTests: XCTestCase {
         let xRotatedLocation: BoardLocation = 2
         let oTapLocation: BoardLocation = 8
         let oRotatedLocation: BoardLocation = 0
-        let game = newObservedGame(withInitialGameBoard: self.tiedBoard)
+        var game: GameController!
 
         eventHandlerQueue.append { gameState in
             // Verify the first player is X
@@ -151,6 +153,7 @@ class GameControllerTests: XCTestCase {
             }
         }
         
+        game = newObservedGame(withInitialGameBoard: self.tiedBoard)
         game.play()
         ex.assertCompletion(withinTimeout: 2)
     }
@@ -193,8 +196,8 @@ class GameControllerTests: XCTestCase {
     }
     
     private func observeEvents(forGame game: GameController) {
-        game.gameStatePublisher.subscribe { event in
-            print("Event (game state): \(event)")
+        game.gameState.subscribe { event in
+            print("GameControllerTests.observeEvents(forGame:)  Event (game state): \(event)")
             switch event {
             case .next(let value):
                 self.handleGameEvent(value)
@@ -203,11 +206,11 @@ class GameControllerTests: XCTestCase {
             case .completed:
                 self.handleGameEvent()
             }
-            }
-            .disposed(by: disposeBag)
+        }
+        .disposed(by: disposeBag)
         
         game.updatedBoardPublisher.subscribe { event in
-            print("Event (updated board): \(event)")
+            print("GameControllerTests.observeEvents(forGame:)  Event (updated board): \(event)")
             switch event {
             case .next(let value):
                 self.handleGameEvent(value)
@@ -216,8 +219,8 @@ class GameControllerTests: XCTestCase {
             case .completed:
                 self.handleGameEvent()
             }
-            }
-            .disposed(by: disposeBag)
+        }
+        .disposed(by: disposeBag)
     }
     
     private func handleGameEvent(_ value: Any? = nil) {
