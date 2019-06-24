@@ -178,19 +178,20 @@ class GameViewController: UIViewController {
     
     private func newGame(withPlayerX playerX: Player, playerO: Player) -> GameController {
         let game = GameController(playerX: playerX, playerO: playerO)
-        
         bindCurrentPlayerIndicatorToGameState(ofGame: game)
+        observeGameEnd(ofGame: game)
         
-        // Handle end-of-game, and game error conditions
+        game.updatedBoardPublisher.subscribe(onNext: handleChanged(gameBoard:)).disposed(by: disposeBag)
+        return game
+    }
+    
+    private func observeGameEnd(ofGame game: GameController) {
         game.gameState.subscribe(
             onNext: handleGameOver(gameState:),
             onError: handleGameError(_:),
             onCompleted: nil,
             onDisposed: nil)
         .disposed(by: disposeBag)
-        
-        game.updatedBoardPublisher.subscribe(onNext: handleChanged(gameBoard:)).disposed(by: disposeBag)
-        return game
     }
     
     private func bindCurrentPlayerIndicatorToGameState(ofGame game: GameController) {
