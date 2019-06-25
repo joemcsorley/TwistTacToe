@@ -22,6 +22,7 @@ class GameViewController: UIViewController {
     private var game: GameController?
     private(set) var playerX: Player
     private(set) var playerO: Player
+    private(set) var tutorialMode = false
     
     private let disposeBag = DisposeBag()
     
@@ -33,6 +34,11 @@ class GameViewController: UIViewController {
         super.init(nibName: nil, bundle: nil)
     }
 
+    convenience init(tutorialMode: Bool) {
+        self.init(playerX: HumanPlayer(symbol: .X), playerO: HumanPlayer(symbol: .O))
+        self.tutorialMode = tutorialMode
+    }
+    
     required init?(coder aDecoder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
@@ -298,15 +304,3 @@ private let okButtonTitle = NSLocalizedString("Ok", comment: "Ok button title")
 private let undoButtonTitle = NSLocalizedString("Undo", comment: "Undo button text")
 private let redoButtonTitle = NSLocalizedString("Redo", comment: "Redo button text")
 private let errorAlertTitle = NSLocalizedString("A fatal error occurred", comment: "error alert title")
-
-// MARK: - Notifications
-
-struct UINotification {
-    static let gameBoardTapped = NSNotification.Name("gameBoardTapped")
-}
-
-// MARK: - Notification Keys
-
-struct UINotificationKey {
-    static let boardLocation = "boardLocation"
-}
