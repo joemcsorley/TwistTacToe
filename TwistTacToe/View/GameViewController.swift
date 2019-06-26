@@ -145,7 +145,7 @@ class GameViewController: UIViewController {
         guard let game = game else { return }
         if game.isGamePaused {
             // Resume a paused game
-            if game.gameBoard.gameResult == .unfinished {
+            if game.gameStateSnapshotValue.gameBoard.gameResult == .unfinished {
                 boardView.isEnabled = true
             }
             game.resume()
@@ -185,15 +185,22 @@ class GameViewController: UIViewController {
     private func newGame(withPlayerX playerX: Player, playerO: Player) -> GameController {
         let game = GameController(playerX: playerX, playerO: playerO)
         bindCurrentPlayerIndicatorToGameState(ofGame: game)
+        observeBoardUpdates(ofGame: game)
         observeGameEnd(ofGame: game)
-        
-        game.updatedBoardPublisher.subscribe(onNext: handleChanged(gameBoard:)).disposed(by: disposeBag)
         return game
     }
     
+    private func observeBoardUpdates(ofGame game: GameController) {
+        game.gameStateSnapshot
+            // Throttle board updates so the user can see them happen
+            .throttle(0.4, scheduler: MainScheduler.instance)
+            .subscribe(onNext: handleChanged(gameStateSnapshot:))
+            .disposed(by: disposeBag)
+    }
+    
     private func observeGameEnd(ofGame game: GameController) {
-        game.gameState.subscribe(
-            onNext: handleGameOver(gameState:),
+        game.gameStateSnapshot.subscribe(
+            onNext: handleGameOver(gameStateSnapshot:),
             onError: handleGameError(_:),
             onCompleted: nil,
             onDisposed: nil)
@@ -201,18 +208,16 @@ class GameViewController: UIViewController {
     }
     
     private func bindCurrentPlayerIndicatorToGameState(ofGame game: GameController) {
-        game.gameState.map { (gameState) -> String in
-            switch gameState {
-            case .xPlaysNext: fallthrough
-            case .awaitingXPlay:
+        game.gameStateSnapshot.map { (gameStateSnapshot) -> String in
+            switch gameStateSnapshot.gameState {
+            case .xPlaysNext:
                 return String(format: currentPlayerText, "X")
-            case .oPlaysNext: fallthrough
-            case .awaitingOPlay:
+            case .oPlaysNext:
                 return String(format: currentPlayerText, "O")
             case .boardNeedsRotation:
                 return gamePiecesRotateText
             case.gameOver:
-                return self.getGameResultText(forWinner: game.gameBoard.gameResult.winningSymbol)
+                return self.getGameResultText(forWinner: game.gameStateSnapshotValue.gameBoard.gameResult.winningSymbol)
             }
         }.bind(to: currentPlayerIndicatorLabel.rx.text).disposed(by: disposeBag)
     }
@@ -236,7 +241,7 @@ class GameViewController: UIViewController {
     
     private func updateStartEndButton() {
         guard let game = game else { return }
-        if game.isGamePaused && game.gameStateValue != .gameOver {
+        if game.isGamePaused && game.gameStateSnapshotValue.gameState != .gameOver {
             startEndButton.backgroundColor = UIColor.green
             startEndButton.setTitle(resumeGameText, for: .normal)
         }
@@ -258,10 +263,10 @@ class GameViewController: UIViewController {
 
     // MARK: - Game Event Handlers
 
-    private func handleChanged(gameBoard updatedBoard: GameBoard) {
+    private func handleChanged(gameStateSnapshot: GameStateSnapshot) {
         do {
             let boardContent = try boardRange.map { boardLocation -> String in
-                guard let symbol = try updatedBoard.gamePiece(atLocation: boardLocation) else { return "" }
+                guard let symbol = try gameStateSnapshot.gameBoard.gamePiece(atLocation: boardLocation) else { return "" }
                 return symbol.rawValue
             }
             boardView.update(boardContent: boardContent)
@@ -270,8 +275,8 @@ class GameViewController: UIViewController {
         } catch {}
     }
     
-    private func handleGameOver(gameState: GameState) {
-        guard gameState == .gameOver else { return }
+    private func handleGameOver(gameStateSnapshot: GameStateSnapshot) {
+        guard gameStateSnapshot.gameState == .gameOver else { return }
         boardView.isEnabled = false
         updateStartEndButton()
         updateUndoRedoButtons()
