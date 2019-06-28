@@ -210,6 +210,7 @@ class GameViewController: UIViewController {
     private func bindCurrentPlayerIndicatorToGameState(ofGame game: GameController) {
         game.gameStateSnapshot.map { (gameStateSnapshot) -> String in
             switch gameStateSnapshot.gameState {
+            case .initial: fallthrough
             case .xPlaysNext:
                 return String(format: currentPlayerText, "X")
             case .oPlaysNext:

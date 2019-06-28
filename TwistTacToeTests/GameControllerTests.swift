@@ -22,14 +22,13 @@ class GameControllerTests: XCTestCase {
         let invalidTapLocation = 22
         var game: GameController!
         
-        eventHandlerQueue.append { gameState in
-            // Verify the first player is X
-            self.verify(gameState: gameState, isEqualTo: .xPlaysNext)
+        eventHandlerQueue.append { gameStateSnapshot in
+            self.verify(gameStateSnapshot: gameStateSnapshot, isEqualTo: .initial)
         }
-        eventHandlerQueue.append { gameState in
-            // Verify the game is ready for X to play, then initiate X's (invalid) play
-            self.verify(gameState: gameState, isEqualTo: .awaitingXPlay) {
-                game.handleGameBoardTapped(atLocation: invalidTapLocation)
+        eventHandlerQueue.append { gameStateSnapshot in
+            // Verify the first player is X, then initiate X's (invalid) play
+            self.verify(gameStateSnapshot: gameStateSnapshot, isEqualTo: .xPlaysNext) {
+                self.tapGameBoard(forGame: game, atLocation: invalidTapLocation)
             }
         }
         eventHandlerQueue.append { error in
@@ -52,46 +51,29 @@ class GameControllerTests: XCTestCase {
         let oRotatedLocation: BoardLocation = 7
         var game: GameController!
 
-        eventHandlerQueue.append { gameState in
-            // Verify the first player is X
-            self.verify(gameState: gameState, isEqualTo: .xPlaysNext)
+        eventHandlerQueue.append { gameStateSnapshot in
+            self.verify(gameStateSnapshot: gameStateSnapshot, isEqualTo: .initial)
         }
-        eventHandlerQueue.append { gameState in
-            // Verify the game is ready for X to play, then initiate X's play
-            self.verify(gameState: gameState, isEqualTo: .awaitingXPlay) {
-                game.handleGameBoardTapped(atLocation: xTapLocation)
+        eventHandlerQueue.append { gameStateSnapshot in
+            // Verify the first player is X, then initiate X's play
+            self.verify(gameStateSnapshot: gameStateSnapshot, isEqualTo: .xPlaysNext) {
+                self.tapGameBoard(forGame: game, atLocation: xTapLocation)
             }
         }
-        eventHandlerQueue.append { updateBoard in
-            // Verify the board reflects X's play
-            self.verify(updatedBoard: updateBoard, withGamePieceLocations: [(xTapLocation, .X)])
-        }
-        eventHandlerQueue.append { gameState in
-            // Verify the next player is O
-            self.verify(gameState: gameState, isEqualTo: .oPlaysNext)
-        }
-        eventHandlerQueue.append { gameState in
-            // Verify the game is ready for O to play, then initiate O's play
-            self.verify(gameState: gameState, isEqualTo: .awaitingOPlay) {
-                game.handleGameBoardTapped(atLocation: oTapLocation)
+        eventHandlerQueue.append { gameStateSnapshot in
+            // Verify the board reflects X's play, and that the next player is O, then initiate O's play
+            self.verify(gameStateSnapshot: gameStateSnapshot, isEqualTo: .oPlaysNext, withGamePieceLocations: [(xTapLocation, .X)]){
+                self.tapGameBoard(forGame: game, atLocation: oTapLocation)
             }
         }
-        eventHandlerQueue.append { updateBoard in
-            // Verify the board reflects O's play
-            self.verify(updatedBoard: updateBoard, withGamePieceLocations: [(oTapLocation, .O)])
+        eventHandlerQueue.append { gameStateSnapshot in
+            // Verify the board reflects O's play, and that the board pieces are about to be rotated
+            self.verify(gameStateSnapshot: gameStateSnapshot, isEqualTo: .boardNeedsRotation, withGamePieceLocations: [(oTapLocation, .O)])
         }
-        eventHandlerQueue.append { gameState in
-            // Verify the board pieces are about to be rotated
-            self.verify(gameState: gameState, isEqualTo: .boardNeedsRotation)
-        }
-        eventHandlerQueue.append { updateBoard in
-            // Verify the board pieces are all rotated
-            self.verify(updatedBoard: updateBoard, withGamePieceLocations: [(xRotatedLocation, .X), (oRotatedLocation, .O)])
-        }
-        eventHandlerQueue.append { gameState in
-            // Verify the game is over, and X is the winner
-            self.verify(gameState: gameState, isEqualTo: .gameOver) {
-                XCTAssertEqual(game.gameBoard.gameResult, .X)
+        eventHandlerQueue.append { gameStateSnapshot in
+            // Verify the board pieces are all rotated, and that the game is over, and X is the winner
+            self.verify(gameStateSnapshot: gameStateSnapshot, isEqualTo: .gameOver, withGamePieceLocations: [(xRotatedLocation, .X), (oRotatedLocation, .O)]) {
+                XCTAssertEqual(game.gameStateSnapshotValue.gameBoard.gameResult, .X)
                 ex.fulfill()
             }
         }
@@ -109,50 +91,33 @@ class GameControllerTests: XCTestCase {
         let oRotatedLocation: BoardLocation = 0
         var game: GameController!
 
-        eventHandlerQueue.append { gameState in
-            // Verify the first player is X
-            self.verify(gameState: gameState, isEqualTo: .xPlaysNext)
+        eventHandlerQueue.append { gameStateSnapshot in
+            self.verify(gameStateSnapshot: gameStateSnapshot, isEqualTo: .initial)
         }
-        eventHandlerQueue.append { gameState in
-            // Verify the game is ready for X to play, then initiate X's play
-            self.verify(gameState: gameState, isEqualTo: .awaitingXPlay) {
-                game.handleGameBoardTapped(atLocation: xTapLocation)
+        eventHandlerQueue.append { gameStateSnapshot in
+            // Verify the first player is X, then initiate X's play
+            self.verify(gameStateSnapshot: gameStateSnapshot, isEqualTo: .xPlaysNext) {
+                self.tapGameBoard(forGame: game, atLocation: xTapLocation)
             }
         }
-        eventHandlerQueue.append { updateBoard in
-            // Verify the board reflects X's play
-            self.verify(updatedBoard: updateBoard, withGamePieceLocations: [(xTapLocation, .X)])
-        }
-        eventHandlerQueue.append { gameState in
-            // Verify the next player is O
-            self.verify(gameState: gameState, isEqualTo: .oPlaysNext)
-        }
-        eventHandlerQueue.append { gameState in
-            // Verify the game is ready for O to play, then initiate O's play
-            self.verify(gameState: gameState, isEqualTo: .awaitingOPlay) {
-                game.handleGameBoardTapped(atLocation: oTapLocation)
+        eventHandlerQueue.append { gameStateSnapshot in
+            // Verify the board reflects X's play, and that the next player is O, then initiate O's play
+            self.verify(gameStateSnapshot: gameStateSnapshot, isEqualTo: .oPlaysNext, withGamePieceLocations: [(xTapLocation, .X)]){
+                self.tapGameBoard(forGame: game, atLocation: oTapLocation)
             }
         }
-        eventHandlerQueue.append { updateBoard in
-            // Verify the board reflects O's play
-            self.verify(updatedBoard: updateBoard, withGamePieceLocations: [(oTapLocation, .O)])
+        eventHandlerQueue.append { gameStateSnapshot in
+            // Verify the board reflects O's play, and that the board pieces are about to be rotated
+            self.verify(gameStateSnapshot: gameStateSnapshot, isEqualTo: .boardNeedsRotation, withGamePieceLocations: [(oTapLocation, .O)])
         }
-        eventHandlerQueue.append { gameState in
-            // Verify the board pieces are about to be rotated
-            self.verify(gameState: gameState, isEqualTo: .boardNeedsRotation)
-        }
-        eventHandlerQueue.append { updateBoard in
-            // Verify the board pieces are all rotated
-            self.verify(updatedBoard: updateBoard, withGamePieceLocations: [(xRotatedLocation, .X), (oRotatedLocation, .O)])
-        }
-        eventHandlerQueue.append { gameState in
-            // Verify the game is over, and that it's a tie
-            self.verify(gameState: gameState, isEqualTo: .gameOver) {
-                XCTAssertEqual(game.gameBoard.gameResult, .tie)
+        eventHandlerQueue.append { gameStateSnapshot in
+            // Verify the board pieces are all rotated, and that the game is over, and X is the winner
+            self.verify(gameStateSnapshot: gameStateSnapshot, isEqualTo: .gameOver, withGamePieceLocations: [(xRotatedLocation, .X), (oRotatedLocation, .O)]) {
+                XCTAssertEqual(game.gameStateSnapshotValue.gameBoard.gameResult, .tie)
                 ex.fulfill()
             }
         }
-        
+
         game = newObservedGame(withInitialGameBoard: self.tiedBoard)
         game.play()
         ex.assertCompletion(withinTimeout: 2)
@@ -196,21 +161,8 @@ class GameControllerTests: XCTestCase {
     }
     
     private func observeEvents(forGame game: GameController) {
-        game.gameState.subscribe { event in
+        game.gameStateSnapshot.subscribe { event in
             print("GameControllerTests.observeEvents(forGame:)  Event (game state): \(event)")
-            switch event {
-            case .next(let value):
-                self.handleGameEvent(value)
-            case .error(let error):
-                self.handleGameEvent(error)
-            case .completed:
-                self.handleGameEvent()
-            }
-        }
-        .disposed(by: disposeBag)
-        
-        game.updatedBoardPublisher.subscribe { event in
-            print("GameControllerTests.observeEvents(forGame:)  Event (updated board): \(event)")
             switch event {
             case .next(let value):
                 self.handleGameEvent(value)
@@ -229,11 +181,23 @@ class GameControllerTests: XCTestCase {
         let eventHandler = eventHandlerQueue.remove(at: 0)
         eventHandler(value)
     }
-    
-    private func verify(gameState: Any?, isEqualTo expectedGameState: GameState, then completionBlock: () -> Void = {}) {
-        guard let gameState = gameState as? GameState, gameState == expectedGameState else {
+
+    private func verify(gameStateSnapshot: Any?,
+                        isEqualTo expectedGameState: GameState,
+                        withGamePieceLocations expectedGamePieceLocations: [GamePieceLocationPair] = [],
+                        then completionBlock: () -> Void = {}) {
+        guard let gameStateSnapshot = gameStateSnapshot as? GameStateSnapshot, gameStateSnapshot.gameState == expectedGameState else {
             XCTFail()
             return
+        }
+        // Verify that all expected game pieces are at their expected board locations
+        do {
+            try expectedGamePieceLocations.forEach {
+                let gamePieceAtLocation = try gameStateSnapshot.gameBoard.gamePiece(atLocation: $0.boardLocation)
+                XCTAssertEqual(gamePieceAtLocation, $0.gamePiece)
+            }
+        } catch {
+            XCTFail()
         }
         completionBlock()
     }
@@ -246,21 +210,10 @@ class GameControllerTests: XCTestCase {
         completionBlock()
     }
     
-    private func verify(updatedBoard: Any?, withGamePieceLocations expectedGamePieceLocations: [GamePieceLocationPair], then completionBlock: () -> Void = {}) {
-        guard let updatedBoard = updatedBoard as? GameBoard else {
-            XCTFail()
-            return
+    private func tapGameBoard(forGame game: GameController, atLocation boardLocation: BoardLocation) {
+        DispatchQueue.main.async {
+            game.handleGameBoardTapped(atLocation: boardLocation)
         }
-        // Verify that all expected game pieces are at their expected board locations
-        do {
-            try expectedGamePieceLocations.forEach {
-                let gamePieceAtLocation = try updatedBoard.gamePiece(atLocation: $0.boardLocation)
-                XCTAssertEqual(gamePieceAtLocation, $0.gamePiece)
-            }
-        } catch {
-            XCTFail()
-        }
-        completionBlock()
     }
 }
 

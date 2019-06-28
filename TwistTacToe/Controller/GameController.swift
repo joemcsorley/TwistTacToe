@@ -18,7 +18,7 @@ class GameController {
     let rotationPattern: RotationPattern
     private lazy var gameBoard = initialGameBoard()
     private var gameState: GameState = .xPlaysNext
-    private(set) var gameStateSnapshot = BehaviorSubject<GameStateSnapshot>(value: (.xPlaysNext, GameBoard()))
+    private(set) var gameStateSnapshot = BehaviorSubject<GameStateSnapshot>(value: (.initial, GameBoard()))
     // Convenience accessor
     var gameStateSnapshotValue: GameStateSnapshot {
         do { return try gameStateSnapshot.value() }
@@ -165,6 +165,7 @@ class GameController {
 // MARK: - Game State Machine States
 
 enum GameState {
+    case initial
     case xPlaysNext
     case oPlaysNext
     case boardNeedsRotation
