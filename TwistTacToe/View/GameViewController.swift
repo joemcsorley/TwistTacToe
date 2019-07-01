@@ -12,10 +12,8 @@ import RxCocoa
 class GameViewController: UIViewController {
     private let boardView = TappableBoardView(withFontSize: 64)
     private let rotationMapView = TappableBoardView(withFontSize: 32)
-    private let currentPlayerIndicatorLabel = UILabel()
-    private let startEndButton = UIButton()
-    private let undoButton = UIButton(type: .custom)
-    private let redoButton = UIButton(type: .custom)
+    private var undoButton: UIButton!
+    private var redoButton: UIButton!
 
     private let radioButtonSize: CGFloat = 32
     
@@ -53,11 +51,29 @@ class GameViewController: UIViewController {
     private func setup() {
         view.backgroundColor = UIColor("#FFD9AA")
         
+        setupNavigationBar()
         setupBoard()
         setupRotationMap()
-        setupCurrentPlayerIndicator()
-        setupResumeEndButton()
         setupUndoRedoButtons()
+    }
+    
+    private func setupNavigationBar() {
+        navigationItem.leftBarButtonItem = createBarButton(withTitle: "< " + endGameText, selector: #selector(handleEndGame))
+        navigationItem.rightBarButtonItem = createBarButton(withTitle: resumeGameText, selector: #selector(handleResumeGame))
+        navigationItem.rightBarButtonItem?.isEnabled = false
+    }
+    
+    private func createBarButton(withTitle title: String, selector: Selector) -> UIBarButtonItem {
+        let barButtonTextAttributes = [NSAttributedString.Key.font: UIFont.systemFont(ofSize: 10, weight: .bold),
+                                       NSAttributedString.Key.foregroundColor: UIColor.brown]
+        let disabledBarButtonTextAttributes = [NSAttributedString.Key.font: UIFont.systemFont(ofSize: 10, weight: .bold),
+                                               NSAttributedString.Key.foregroundColor: UIColor.lightGray]
+        let barButton = UIBarButtonItem(title: title, style: .plain, target: self, action: selector)
+        barButton.setTitleTextAttributes(barButtonTextAttributes, for: .normal)
+        barButton.setTitleTextAttributes(barButtonTextAttributes, for: .focused)
+        barButton.setTitleTextAttributes(barButtonTextAttributes, for: .selected)
+        barButton.setTitleTextAttributes(disabledBarButtonTextAttributes, for: .disabled)
+        return barButton
     }
     
     private func setupBoard() {
@@ -69,13 +85,6 @@ class GameViewController: UIViewController {
         view.addSubviewWithAutoLayout(rotationMapView)
     }
 
-    private func setupCurrentPlayerIndicator() {
-        view.addSubviewWithAutoLayout(currentPlayerIndicatorLabel)
-        currentPlayerIndicatorLabel.font = UIFont.systemFont(ofSize: 12)
-        currentPlayerIndicatorLabel.textColor = UIColor.brown
-        currentPlayerIndicatorLabel.backgroundColor = UIColor.clear
-    }
-    
     private func setupPlayerSelectorButton(_ button: UIButton, handler: Selector) {
         button.setTitleColor(UIColor.black, for: .normal)
         button.titleLabel?.font = UIFont.systemFont(ofSize: 24)
@@ -84,78 +93,60 @@ class GameViewController: UIViewController {
         button.layer.cornerRadius = radioButtonSize / 2
     }
     
-    private func setupResumeEndButton() {
-        startEndButton.setTitleColor(UIColor.black, for: .normal)
-        startEndButton.addTarget(self, action: #selector(handleResumeEndGame), for: .touchUpInside)
-        startEndButton.layer.cornerRadius = 4
-        updateStartEndButton()
-        view.addSubviewWithAutoLayout(startEndButton)
-    }
-
     private func setupUndoRedoButtons() {
-        undoButton.setTitle(undoButtonTitle, for: .normal)
-        undoButton.setTitleColor(UIColor.brown, for: .normal)
-        undoButton.setTitleColor(UIColor("#FEAF7B"), for: .disabled)
-        undoButton.titleLabel?.font = UIFont.systemFont(ofSize: 12, weight: .bold)
-        undoButton.addTarget(self, action: #selector(handleUndo), for: .touchUpInside)
-        undoButton.isEnabled = false
+        undoButton = createUndoRedoButton(withTitle: undoButtonTitle, selector: #selector(handleUndo))
         view.addSubviewWithAutoLayout(undoButton)
 
-        redoButton.setTitle(redoButtonTitle, for: .normal)
-        redoButton.setTitleColor(UIColor.brown, for: .normal)
-        redoButton.setTitleColor(UIColor("#FEAF7B"), for: .disabled)
-        redoButton.titleLabel?.font = UIFont.systemFont(ofSize: 12, weight: .bold)
-        redoButton.addTarget(self, action: #selector(handleRedo), for: .touchUpInside)
-        redoButton.isEnabled = false
+        redoButton = createUndoRedoButton(withTitle: redoButtonTitle, selector: #selector(handleRedo))
         view.addSubviewWithAutoLayout(redoButton)
+    }
+    
+    private func createUndoRedoButton(withTitle title: String, selector: Selector) -> UIButton {
+        let button = UIButton(type: .custom)
+        button.setTitle(title, for: .normal)
+        button.setTitleColor(UIColor.brown, for: .normal)
+        button.setTitleColor(UIColor("#FEAF7B"), for: .disabled)
+        button.titleLabel?.font = UIFont.systemFont(ofSize: 12, weight: .bold)
+        button.addTarget(self, action: selector, for: .touchUpInside)
+        button.isEnabled = false
+        return button
     }
     
     private func layout() {
         NSLayoutConstraint.activate([
-            boardView.topAnchor.constraint(equalTo: view.normalizedLayoutGuide.topAnchor, constant: 15),
+            undoButton.topAnchor.constraint(equalTo: view.normalizedLayoutGuide.topAnchor, constant: 15),
+            undoButton.trailingAnchor.constraint(equalTo: redoButton.leadingAnchor, constant: -15),
+            undoButton.heightAnchor.constraint(equalToConstant: 14),
+            
+            redoButton.topAnchor.constraint(equalTo: view.normalizedLayoutGuide.topAnchor, constant: 15),
+            redoButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -15),
+            redoButton.heightAnchor.constraint(equalToConstant: 14),
+            
+            boardView.topAnchor.constraint(equalTo: undoButton.bottomAnchor, constant: 15),
             boardView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 15),
             boardView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -15),
             
-            rotationMapView.topAnchor.constraint(equalTo: boardView.bottomAnchor, constant: 30),
+            rotationMapView.topAnchor.constraint(greaterThanOrEqualTo: boardView.bottomAnchor, constant: 15),
+            rotationMapView.bottomAnchor.constraint(equalTo: view.normalizedLayoutGuide.bottomAnchor, constant: -15),
             rotationMapView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -15),
             rotationMapView.widthAnchor.constraint(equalTo: boardView.widthAnchor, multiplier: 0.4),
-            
-            startEndButton.bottomAnchor.constraint(equalTo: rotationMapView.bottomAnchor),
-            startEndButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 15),
-            startEndButton.trailingAnchor.constraint(equalTo: rotationMapView.leadingAnchor, constant: -15),
-            startEndButton.heightAnchor.constraint(equalToConstant: radioButtonSize),
-
-            undoButton.bottomAnchor.constraint(equalTo: view.normalizedLayoutGuide.bottomAnchor, constant: -15),
-            undoButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 15),
-            undoButton.heightAnchor.constraint(equalToConstant: 14),
-
-            redoButton.bottomAnchor.constraint(equalTo: view.normalizedLayoutGuide.bottomAnchor, constant: -15),
-            redoButton.leadingAnchor.constraint(equalTo: undoButton.trailingAnchor, constant: 15),
-            redoButton.heightAnchor.constraint(equalToConstant: 14),
-            
-            currentPlayerIndicatorLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 15),
-            currentPlayerIndicatorLabel.bottomAnchor.constraint(equalTo: undoButton.topAnchor, constant: -15),
         ])
     }
     
     // MARK: - Button Handlers
     
     @objc
-    private func handleResumeEndGame() {
-        guard let game = game else { return }
-        if game.isGamePaused {
-            // Resume a paused game
-            if game.gameStateSnapshotValue.gameBoard.gameResult == .unfinished {
-                boardView.isEnabled = true
-            }
-            game.resume()
-            updateStartEndButton()
-            updateUndoRedoButtons()
+    private func handleResumeGame() {
+        guard let game = game, game.isGamePaused else { return }
+        if game.gameStateSnapshotValue.gameBoard.gameResult == .unfinished {
+            boardView.isEnabled = true
         }
-        else {
-            // End game
-            dismiss(animated: true, completion: nil)
-        }
+        game.resume()
+    }
+
+    @objc
+    private func handleEndGame() {
+        navigationController?.popViewController(animated: true)
     }
 
     @objc
@@ -179,7 +170,6 @@ class GameViewController: UIViewController {
         game = newGame(withPlayerX: playerX, playerO: playerO)
         game?.play()
         updateRotationMap()
-        updateStartEndButton()
     }
     
     private func newGame(withPlayerX playerX: Player, playerO: Player) -> GameController {
@@ -220,15 +210,7 @@ class GameViewController: UIViewController {
             case.gameOver:
                 return self.getGameResultText(forWinner: game.gameStateSnapshotValue.gameBoard.gameResult.winningSymbol)
             }
-        }.bind(to: currentPlayerIndicatorLabel.rx.text).disposed(by: disposeBag)
-    }
-    
-    private func reset() {
-        game = nil
-        updateStartEndButton()
-        updateUndoRedoButtons()
-        boardView.reset()
-        rotationMapView.update(boardContent: [])
+        }.bind(to: navigationItem.rx.title).disposed(by: disposeBag)
     }
     
     private func updateRotationMap() {
@@ -240,23 +222,6 @@ class GameViewController: UIViewController {
         rotationMapView.update(boardContent: rotationBoardContent)
     }
     
-    private func updateStartEndButton() {
-        guard let game = game else { return }
-        if game.isGamePaused && game.gameStateSnapshotValue.gameState != .gameOver {
-            startEndButton.backgroundColor = UIColor.green
-            startEndButton.setTitle(resumeGameText, for: .normal)
-        }
-        else {
-            startEndButton.backgroundColor = UIColor.red
-            startEndButton.setTitle(endGameText, for: .normal)
-        }
-    }
-    
-    private func updateUndoRedoButtons() {
-        undoButton.isEnabled = game?.hasUndo ?? false
-        redoButton.isEnabled = game?.hasRedo ?? false
-    }
-
     private func getGameResultText(forWinner winner: GamePiece?) -> String {
         guard let winner = winner else { return tieText }
         return winner == .X ? xWinsText : oWinsText
@@ -271,23 +236,22 @@ class GameViewController: UIViewController {
                 return symbol.rawValue
             }
             boardView.update(boardContent: boardContent)
-            updateStartEndButton()
-            updateUndoRedoButtons()
+            navigationItem.rightBarButtonItem?.isEnabled = game?.isGamePaused ?? false
+            undoButton.isEnabled = game?.hasUndo ?? false
+            redoButton.isEnabled = game?.hasRedo ?? false
         } catch {}
     }
     
     private func handleGameOver(gameStateSnapshot: GameStateSnapshot) {
         guard gameStateSnapshot.gameState == .gameOver else { return }
         boardView.isEnabled = false
-        updateStartEndButton()
-        updateUndoRedoButtons()
     }
     
     private func handleGameError(_ error: Error) {
         let errorAlert = UIAlertController(title: errorAlertTitle, message: error.localizedDescription, preferredStyle: .alert)
         errorAlert.addAction(UIAlertAction(title: okButtonTitle, style: .default) { action in
             DispatchQueue.main.async {
-                self.dismiss(animated: true, completion: nil)
+                self.navigationController?.popViewController(animated: true)
             }
         })
         present(errorAlert, animated: true, completion: nil)

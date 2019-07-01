@@ -97,6 +97,9 @@ class GameController {
         guard hasRedo else { return }
         playHistoryIndex += 1
         updateGameToCurrentPlayHistoryIndex()
+        if playHistoryIndex == playHistory.count-1 {
+            resume()
+        }
     }
     
     // MARK: - State Machine
