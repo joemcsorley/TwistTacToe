@@ -34,6 +34,9 @@
 		D821035D22A1A26500A8EB74 /* XCTestExpectation+TwistTacToe.swift in Sources */ = {isa = PBXBuildFile; fileRef = D821035C22A1A26500A8EB74 /* XCTestExpectation+TwistTacToe.swift */; };
 		D821035E22A1A84D00A8EB74 /* PromiseKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D821035522A0815300A8EB74 /* PromiseKit.framework */; };
 		D821036022A1AB5500A8EB74 /* AutomatedRandomPlayerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D821035F22A1AB5500A8EB74 /* AutomatedRandomPlayerTests.swift */; };
+		D8339D7122CC1C35004BA71B /* TutorialView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8339D7022CC1C35004BA71B /* TutorialView.swift */; };
+		D8339D7322CD119B004BA71B /* Comparable+TwistTacToe.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8339D7222CD119B004BA71B /* Comparable+TwistTacToe.swift */; };
+		D8339D7622CD2316004BA71B /* TutorialData.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8339D7522CD2316004BA71B /* TutorialData.swift */; };
 		D85E401322BC5F9E00611B37 /* GameChooserViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D85E401222BC5F9E00611B37 /* GameChooserViewController.swift */; };
 		D89AEA1F22A34C3E00F59525 /* UIView+TwistTacToe.swift in Sources */ = {isa = PBXBuildFile; fileRef = D89AEA1E22A34C3E00F59525 /* UIView+TwistTacToe.swift */; };
 		D89AEA2122A3585400F59525 /* UIColor+TwistTacToe.swift in Sources */ = {isa = PBXBuildFile; fileRef = D89AEA2022A3585400F59525 /* UIColor+TwistTacToe.swift */; };
@@ -90,6 +93,9 @@
 		D821035A22A1A1CE00A8EB74 /* XCTestCase+TwistTacToe.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "XCTestCase+TwistTacToe.swift"; sourceTree = "<group>"; };
 		D821035C22A1A26500A8EB74 /* XCTestExpectation+TwistTacToe.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "XCTestExpectation+TwistTacToe.swift"; sourceTree = "<group>"; };
 		D821035F22A1AB5500A8EB74 /* AutomatedRandomPlayerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AutomatedRandomPlayerTests.swift; sourceTree = "<group>"; };
+		D8339D7022CC1C35004BA71B /* TutorialView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TutorialView.swift; sourceTree = "<group>"; };
+		D8339D7222CD119B004BA71B /* Comparable+TwistTacToe.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Comparable+TwistTacToe.swift"; sourceTree = "<group>"; };
+		D8339D7522CD2316004BA71B /* TutorialData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TutorialData.swift; sourceTree = "<group>"; };
 		D85E401222BC5F9E00611B37 /* GameChooserViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameChooserViewController.swift; sourceTree = "<group>"; };
 		D89AEA1E22A34C3E00F59525 /* UIView+TwistTacToe.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UIView+TwistTacToe.swift"; sourceTree = "<group>"; };
 		D89AEA2022A3585400F59525 /* UIColor+TwistTacToe.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UIColor+TwistTacToe.swift"; sourceTree = "<group>"; };
@@ -191,7 +197,9 @@
 			isa = PBXGroup;
 			children = (
 				0BD6A0E61F82D07F00BE5C84 /* GameController.swift */,
+				D8339D7522CD2316004BA71B /* TutorialData.swift */,
 				0B1E9A152129CDD400ECFCC0 /* Players */,
+				D8339D7422CD22C8004BA71B /* Tutorial */,
 			);
 			path = Controller;
 			sourceTree = "<group>";
@@ -233,9 +241,17 @@
 			name = Frameworks;
 			sourceTree = "<group>";
 		};
+		D8339D7422CD22C8004BA71B /* Tutorial */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Tutorial;
+			sourceTree = "<group>";
+		};
 		D89C5BDA22A1C0BE00214A24 /* Extensions */ = {
 			isa = PBXGroup;
 			children = (
+				D8339D7222CD119B004BA71B /* Comparable+TwistTacToe.swift */,
 				0B1E9A1B212A572500ECFCC0 /* DispatchTime+Future.swift */,
 				D89AEA1E22A34C3E00F59525 /* UIView+TwistTacToe.swift */,
 				D89AEA2022A3585400F59525 /* UIColor+TwistTacToe.swift */,
@@ -250,6 +266,7 @@
 				D85E401222BC5F9E00611B37 /* GameChooserViewController.swift */,
 				D8B1AD6C22B17D6900421951 /* RadioButtonsView.swift */,
 				0BA581C82127665500FC56F0 /* TappableBoardView.swift */,
+				D8339D7022CC1C35004BA71B /* TutorialView.swift */,
 			);
 			path = View;
 			sourceTree = "<group>";
@@ -400,9 +417,12 @@
 			files = (
 				D821035922A19C6D00A8EB74 /* AutomatedImpossiblePlayer.swift in Sources */,
 				0BD6A0E51F82C83D00BE5C84 /* AutomatedRandomPlayer.swift in Sources */,
+				D8339D7322CD119B004BA71B /* Comparable+TwistTacToe.swift in Sources */,
 				0B1E9A182129CE9E00ECFCC0 /* RotationPattern.swift in Sources */,
 				D85E401322BC5F9E00611B37 /* GameChooserViewController.swift in Sources */,
+				D8339D7622CD2316004BA71B /* TutorialData.swift in Sources */,
 				D89AEA2122A3585400F59525 /* UIColor+TwistTacToe.swift in Sources */,
+				D8339D7122CC1C35004BA71B /* TutorialView.swift in Sources */,
 				0BB1F6B8212C820A00323F9A /* WinLossEvaluator.swift in Sources */,
 				0B143FE91F7EE43500D77DD4 /* GameViewController.swift in Sources */,
 				D89AEA1F22A34C3E00F59525 /* UIView+TwistTacToe.swift in Sources */,

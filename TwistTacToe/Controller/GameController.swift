@@ -18,14 +18,14 @@ class GameController {
     let rotationPattern: RotationPattern
     private lazy var gameBoard = initialGameBoard()
     private var gameState: GameState = .xPlaysNext
-    private(set) var gameStateSnapshot = BehaviorSubject<GameStateSnapshot>(value: (.initial, GameBoard()))
+    private(set) var gameStateSnapshot = BehaviorSubject<GameStateSnapshot>(value: (0, .initial, GameBoard()))
     // Convenience accessor
     var gameStateSnapshotValue: GameStateSnapshot {
         do { return try gameStateSnapshot.value() }
-        catch { return (.xPlaysNext, GameBoard()) }
+        catch { return (0, .initial, GameBoard()) }
     }
     private lazy var playHistory: [GameStateSnapshot] = initialPlayHistory()
-    private var playHistoryIndex = 0
+    private(set) var playHistoryIndex = 0
     private(set) var isGamePaused = false
     
     private let disposeBag = DisposeBag()
@@ -69,6 +69,11 @@ class GameController {
 
     func play() {
         advanceGameState()
+    }
+    
+    func play(withHistory playHistory: [GameStateSnapshot], startingAtIndex playHistoryIndex: Int = 0) {
+        self.playHistory = playHistory
+        self.playHistoryIndex = playHistoryIndex.clamp(0, playHistory.count-1)
     }
 
     func resume() {
@@ -152,23 +157,23 @@ class GameController {
     // MARK: - Helpers
     
     private func recordPlayHistory() {
-        let currentGameStateSnapshot = (gameState: gameState, gameBoard: gameBoard)
-        gameStateSnapshot.onNext(currentGameStateSnapshot)
+        playHistoryIndex = playHistory.count
+        let currentGameStateSnapshot = (playHistoryIndex: playHistoryIndex, gameState: gameState, gameBoard: gameBoard)
         playHistory.append(currentGameStateSnapshot)
-        playHistoryIndex = playHistory.count - 1
+        gameStateSnapshot.onNext(currentGameStateSnapshot)
     }
     
     private func updateGameToCurrentPlayHistoryIndex() {
         gameBoard = playHistory[playHistoryIndex].gameBoard
         gameState = playHistory[playHistoryIndex].gameState
-        gameStateSnapshot.onNext((gameState: gameState, gameBoard: gameBoard))
+        gameStateSnapshot.onNext((playHistoryIndex: playHistoryIndex, gameState: gameState, gameBoard: gameBoard))
     }
 }
 
 // MARK: - Game State Machine States
 
 enum GameState {
-    case initial
+    case initial  // This is only used in the initial published game state, but never as part of game play
     case xPlaysNext
     case oPlaysNext
     case boardNeedsRotation
@@ -177,4 +182,4 @@ enum GameState {
 
 // MARK: - Turn History
 
-typealias GameStateSnapshot = (gameState: GameState, gameBoard: GameBoard)
+typealias GameStateSnapshot = (playHistoryIndex: Int, gameState: GameState, gameBoard: GameBoard)

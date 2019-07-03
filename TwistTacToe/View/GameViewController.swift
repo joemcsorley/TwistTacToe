@@ -12,6 +12,7 @@ import RxCocoa
 class GameViewController: UIViewController {
     private let boardView = TappableBoardView(withFontSize: 64)
     private let rotationMapView = TappableBoardView(withFontSize: 32)
+    private let tutorialView = TutorialView()
     private var undoButton: UIButton!
     private var redoButton: UIButton!
 
@@ -20,7 +21,7 @@ class GameViewController: UIViewController {
     private var game: GameController?
     private(set) var playerX: Player
     private(set) var playerO: Player
-    private(set) var tutorialMode = false
+    private(set) var isTutorialMode = false
     
     private let disposeBag = DisposeBag()
     
@@ -34,7 +35,7 @@ class GameViewController: UIViewController {
 
     convenience init(tutorialMode: Bool) {
         self.init(playerX: HumanPlayer(symbol: .X), playerO: HumanPlayer(symbol: .O))
-        self.tutorialMode = tutorialMode
+        self.isTutorialMode = tutorialMode
     }
     
     required init?(coder aDecoder: NSCoder) {
@@ -45,7 +46,12 @@ class GameViewController: UIViewController {
         super.viewDidLoad()
         setup()
         layout()
-        startNewGame()
+        if isTutorialMode {
+            startTutorial()
+        }
+        else {
+            startNewGame()
+        }
     }
     
     private func setup() {
@@ -53,14 +59,17 @@ class GameViewController: UIViewController {
         
         setupNavigationBar()
         setupBoard()
+        setupTutorialView()
         setupRotationMap()
         setupUndoRedoButtons()
     }
     
     private func setupNavigationBar() {
-        navigationItem.leftBarButtonItem = createBarButton(withTitle: "< " + endGameText, selector: #selector(handleEndGame))
-        navigationItem.rightBarButtonItem = createBarButton(withTitle: resumeGameText, selector: #selector(handleResumeGame))
-        navigationItem.rightBarButtonItem?.isEnabled = false
+        navigationItem.leftBarButtonItem = createBarButton(withTitle: endGameText, selector: #selector(handleEndGame))
+        if !isTutorialMode {
+            navigationItem.rightBarButtonItem = createBarButton(withTitle: resumeGameText, selector: #selector(handleResumeGame))
+            navigationItem.rightBarButtonItem?.isEnabled = false
+        }
     }
     
     private func createBarButton(withTitle title: String, selector: Selector) -> UIBarButtonItem {
@@ -79,6 +88,18 @@ class GameViewController: UIViewController {
     private func setupBoard() {
         view.addSubviewWithAutoLayout(boardView)
         boardView.tapHandler = handleTapped
+    }
+
+    private func setupTutorialView() {
+        tutorialView.backgroundColor = UIColor.white
+        tutorialView.layer.cornerRadius = 4
+        tutorialView.layer.masksToBounds = false
+        tutorialView.layer.shadowOffset = CGSize(width: 4, height: 4)
+        tutorialView.layer.shadowColor = UIColor.brown.cgColor
+        tutorialView.layer.shadowRadius = 4
+        tutorialView.layer.shadowOpacity = 1
+        tutorialView.alpha = isTutorialMode ? 1 : 0
+        view.addSubviewWithAutoLayout(tutorialView)
     }
 
     private func setupRotationMap() {
@@ -109,6 +130,7 @@ class GameViewController: UIViewController {
         button.titleLabel?.font = UIFont.systemFont(ofSize: 12, weight: .bold)
         button.addTarget(self, action: selector, for: .touchUpInside)
         button.isEnabled = false
+        button.alpha = isTutorialMode ? 0 : 1
         return button
     }
     
@@ -130,6 +152,11 @@ class GameViewController: UIViewController {
             rotationMapView.bottomAnchor.constraint(equalTo: view.normalizedLayoutGuide.bottomAnchor, constant: -15),
             rotationMapView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -15),
             rotationMapView.widthAnchor.constraint(equalTo: boardView.widthAnchor, multiplier: 0.4),
+            
+            tutorialView.topAnchor.constraint(equalTo: boardView.bottomAnchor, constant: 15),
+            tutorialView.bottomAnchor.constraint(equalTo: view.normalizedLayoutGuide.bottomAnchor, constant: -15),
+            tutorialView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 15),
+            tutorialView.trailingAnchor.constraint(equalTo: rotationMapView.leadingAnchor, constant: -15),
         ])
     }
     
@@ -165,19 +192,44 @@ class GameViewController: UIViewController {
 
     // MARK: - Helper Methods
     
+    private func startTutorial() {
+        guard let rotationPattern = try? TutorialData.getRotationPattern() else { return }
+        boardView.isEnabled = false
+        game = newGame(withPlayerX: playerX, playerO: playerO, rotationPattern: rotationPattern)
+        game?.play(withHistory: TutorialData.playHistory)
+        updateRotationMapView()
+    }
+    
     private func startNewGame() {
         boardView.isEnabled = true
         game = newGame(withPlayerX: playerX, playerO: playerO)
         game?.play()
-        updateRotationMap()
+        updateRotationMapView()
     }
     
-    private func newGame(withPlayerX playerX: Player, playerO: Player) -> GameController {
-        let game = GameController(playerX: playerX, playerO: playerO)
+    private func newGame(withPlayerX playerX: Player, playerO: Player, rotationPattern: RotationPattern? = nil) -> GameController {
+        var game: GameController!
+        if let rotationPattern = rotationPattern {
+            game = GameController(playerX: playerX, playerO: playerO, rotationPattern: rotationPattern)
+        }
+        else {
+            game = GameController(playerX: playerX, playerO: playerO)
+        }
         bindCurrentPlayerIndicatorToGameState(ofGame: game)
         observeBoardUpdates(ofGame: game)
         observeGameEnd(ofGame: game)
+        observeTutorial()
         return game
+    }
+    
+    private func observeTutorial() {
+        guard isTutorialMode else { return }
+        tutorialView.backButton.rx.tap.bind {
+            self.handleUndo()
+        }.disposed(by: disposeBag)
+        tutorialView.nextButton.rx.tap.bind {
+            self.handleRedo()
+        }.disposed(by: disposeBag)
     }
     
     private func observeBoardUpdates(ofGame game: GameController) {
@@ -193,10 +245,10 @@ class GameViewController: UIViewController {
             onNext: handleGameOver(gameStateSnapshot:),
             onError: handleGameError(_:),
             onCompleted: nil,
-            onDisposed: nil)
-        .disposed(by: disposeBag)
+            onDisposed: nil
+        ).disposed(by: disposeBag)
     }
-    
+
     private func bindCurrentPlayerIndicatorToGameState(ofGame game: GameController) {
         game.gameStateSnapshot.map { (gameStateSnapshot) -> String in
             switch gameStateSnapshot.gameState {
@@ -213,7 +265,7 @@ class GameViewController: UIViewController {
         }.bind(to: navigationItem.rx.title).disposed(by: disposeBag)
     }
     
-    private func updateRotationMap() {
+    private func updateRotationMapView() {
         guard let rotationPattern = game?.rotationPattern else { return }
         var rotationBoardContent: [String] = []
         for i in boardRange {
@@ -239,6 +291,9 @@ class GameViewController: UIViewController {
             navigationItem.rightBarButtonItem?.isEnabled = game?.isGamePaused ?? false
             undoButton.isEnabled = game?.hasUndo ?? false
             redoButton.isEnabled = game?.hasRedo ?? false
+            if isTutorialMode {
+                tutorialView.label.text = TutorialData.tutorialText[gameStateSnapshot.playHistoryIndex]
+            }
         } catch {}
     }
     

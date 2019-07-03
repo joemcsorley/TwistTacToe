@@ -59,6 +59,19 @@ struct GameBoard: Equatable {
         return GameBoard(xBits: board.xBits, oBits: board.oBits)
     }
 
+    static func newWithPattern(_ pattern: [String]) -> GameBoard {
+        var xBits: BoardBits = 0
+        var oBits: BoardBits = 0
+        
+        for i in boardRange {
+            xBits |= pattern[i] == "X" ? 1 << i : 0
+        }
+        for i in boardRange {
+            oBits |= pattern[i] == "O" ? 1 << i : 0
+        }
+        return GameBoard(xBits: xBits, oBits: oBits)
+    }
+
     func newByPlaying(_ symbol: GamePiece, atLocation boardLocation: BoardLocation) throws -> GameBoard {
         guard boardRange.contains(boardLocation) else { throw GameBoardError.invalidBoardLocation }
         guard isEmpty(boardLocation: boardLocation) else { throw GameBoardError.boardLocationAlreadyOccupied }
@@ -114,6 +127,10 @@ struct GameBoard: Equatable {
 }
 
 // MARK: - Board Helper Definitions
+
+let _X = "X"
+let _O = "O"
+let __ = ""
 
 typealias BoardLocation = Int
 typealias BoardBits = Int16

@@ -9,34 +9,6 @@ import Foundation
 @testable import TwistTacToe
 
 extension GameBoard {
-    static func newWithPattern(_ pattern: [String]) -> GameBoard {
-        var xBits: BoardBits = 0
-        var oBits: BoardBits = 0
-        
-        for i in boardRange {
-            xBits |= pattern[i] == "X" ? 1 << i : 0
-        }
-        for i in boardRange {
-            oBits |= pattern[i] == "O" ? 1 << i : 0
-        }
-        return GameBoard(xBits: xBits, oBits: oBits)
-    }
-    
-//    mutating func set(gamePiece: GamePiece?, atLocation boardLocation: BoardLocation) {
-//        let bitmask: BoardBits = 1 << boardLocation
-//        if gamePiece == .X {
-//            xBits |= bitmask
-//        }
-//        else if gamePiece == .O {
-//            oBits |= bitmask
-//        }
-//        else {
-//            let inverseMask = ~bitmask
-//            xBits &= inverseMask
-//            oBits &= inverseMask
-//        }
-//    }
-    
     func prettyPrint() {
         func boardRangeToString(_ range: [Int]) throws -> String {
             var boardRangeString = ""
@@ -56,10 +28,6 @@ extension GameBoard {
         }
     }
 }
-
-let _X = "X"
-let _O = "O"
-let __ = ""
 
 let unfinishedBoard1 = GameBoard.newWithPattern([
     _X, __, _O,

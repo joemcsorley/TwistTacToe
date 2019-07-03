@@ -105,7 +105,8 @@ class GameChooserViewController: UIViewController {
 
     @objc
     private func handleHowToPlay() {
-        print("Explain how to play the game here")
+        let gameViewController = GameViewController(tutorialMode: true)
+        navigationController?.pushViewController(gameViewController, animated: true)
     }
 }
 
