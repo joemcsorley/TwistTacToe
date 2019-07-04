@@ -21,12 +21,14 @@ class GameController {
     private(set) var gameStateSnapshot = BehaviorSubject<GameStateSnapshot>(value: (0, .initial, GameBoard()))
     // Convenience accessor
     var gameStateSnapshotValue: GameStateSnapshot {
-        do { return try gameStateSnapshot.value() }
-        catch { return (0, .initial, GameBoard()) }
+        guard let gameStateSnapshotValue = try? gameStateSnapshot.value() else { return (0, .initial, GameBoard()) }
+        return gameStateSnapshotValue
     }
+    
     private lazy var playHistory: [GameStateSnapshot] = initialPlayHistory()
     private(set) var playHistoryIndex = 0
     private(set) var isGamePaused = false
+    var nonHumanActionDelay = 0.4
     
     private let disposeBag = DisposeBag()
 
@@ -141,7 +143,9 @@ class GameController {
         else {
             gameState = .gameOver
         }
-        advanceGameState()
+        DispatchQueue.main.asyncAfter(deadline: DispatchTime.future(seconds: nonHumanActionDelay)) {
+            self.advanceGameState()
+        }
     }
 
     // MARK: - Player Event Handlers
@@ -150,7 +154,10 @@ class GameController {
         guard (gameState == .xPlaysNext && player == playerX) || (gameState == .oPlaysNext && player == playerO) else { return }
         gameBoard = updatedBoard
         self.gameState = self.gameState == .xPlaysNext ? .oPlaysNext : .boardNeedsRotation
-        self.advanceGameState()
+        let delay = (player as? HumanPlayer != nil) ? 0.0 : nonHumanActionDelay
+        DispatchQueue.main.asyncAfter(deadline: DispatchTime.future(seconds: delay)) {
+            self.advanceGameState()
+        }
     }
 
     // MARK: - Helpers

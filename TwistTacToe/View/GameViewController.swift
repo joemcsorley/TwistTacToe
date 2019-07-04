@@ -233,8 +233,6 @@ class GameViewController: UIViewController {
     
     private func observeBoardUpdates(ofGame game: GameController) {
         game.gameStateSnapshot
-            // Throttle board updates so the user can see them happen
-            .throttle(0.4, scheduler: MainScheduler.instance)
             .subscribe(onNext: handleChanged(gameStateSnapshot:))
             .disposed(by: disposeBag)
     }

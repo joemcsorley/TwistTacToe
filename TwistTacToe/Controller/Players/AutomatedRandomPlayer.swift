@@ -18,15 +18,13 @@ class AutomatedRandomPlayer: Player {
     }
 
     func takeTurn(onBoard board: GameBoard, rotationPattern: RotationPattern) {
-        DispatchQueue.main.asyncAfter(deadline: DispatchTime.future(seconds: 0.5)) {
-            do {
-                let boardLocation = try board.randomOpenLocation()
-                let updatedBoard = try board.newByPlaying(self.gamePiece, atLocation: boardLocation)
-                self.turnPublisher.onNext((boardLocation, updatedBoard))
-            } catch {
-                print("Error: Something went wrong handling automated play for player \(self.gamePiece)")
-                self.turnPublisher.onError(error)
-            }
+        do {
+            let boardLocation = try board.randomOpenLocation()
+            let updatedBoard = try board.newByPlaying(self.gamePiece, atLocation: boardLocation)
+            self.turnPublisher.onNext((boardLocation, updatedBoard))
+        } catch {
+            print("Error: Something went wrong handling automated play for player \(self.gamePiece)")
+            self.turnPublisher.onError(error)
         }
         return
     }
