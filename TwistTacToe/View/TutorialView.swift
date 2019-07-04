@@ -40,6 +40,7 @@ class TutorialView: UIView {
     private func setupBackButton() {
         backButton.setTitle(backButtonTitle, for: .normal)
         backButton.setTitleColor(UIColor.brown, for: .normal)
+        backButton.setTitleColor(UIColor("#FEAF7B"), for: .disabled)
         backButton.titleLabel?.font = UIFont.boldSystemFont(ofSize: 12)
         backButton.layer.cornerRadius = 3
         addSubviewWithAutoLayout(backButton)
@@ -48,6 +49,7 @@ class TutorialView: UIView {
     private func setupNextButton() {
         nextButton.setTitle(nextButtonTitle, for: .normal)
         nextButton.setTitleColor(UIColor.brown, for: .normal)
+        nextButton.setTitleColor(UIColor("#FEAF7B"), for: .disabled)
         nextButton.titleLabel?.font = UIFont.boldSystemFont(ofSize: 12)
         nextButton.layer.cornerRadius = 3
         addSubviewWithAutoLayout(nextButton)

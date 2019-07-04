@@ -73,9 +73,9 @@ class GameViewController: UIViewController {
     }
     
     private func createBarButton(withTitle title: String, selector: Selector) -> UIBarButtonItem {
-        let barButtonTextAttributes = [NSAttributedString.Key.font: UIFont.systemFont(ofSize: 10, weight: .bold),
+        let barButtonTextAttributes = [NSAttributedString.Key.font: UIFont.systemFont(ofSize: 14, weight: .bold),
                                        NSAttributedString.Key.foregroundColor: UIColor.brown]
-        let disabledBarButtonTextAttributes = [NSAttributedString.Key.font: UIFont.systemFont(ofSize: 10, weight: .bold),
+        let disabledBarButtonTextAttributes = [NSAttributedString.Key.font: UIFont.systemFont(ofSize: 14, weight: .bold),
                                                NSAttributedString.Key.foregroundColor: UIColor.lightGray]
         let barButton = UIBarButtonItem(title: title, style: .plain, target: self, action: selector)
         barButton.setTitleTextAttributes(barButtonTextAttributes, for: .normal)
@@ -195,8 +195,7 @@ class GameViewController: UIViewController {
     private func startTutorial() {
         guard let rotationPattern = try? TutorialData.getRotationPattern() else { return }
         boardView.isEnabled = false
-        game = newGame(withPlayerX: playerX, playerO: playerO, rotationPattern: rotationPattern)
-        game?.play(withHistory: TutorialData.playHistory)
+        game = newGame(withPlayerX: playerX, playerO: playerO, rotationPattern: rotationPattern, playHistory: TutorialData.playHistory)
         updateRotationMapView()
     }
     
@@ -207,10 +206,10 @@ class GameViewController: UIViewController {
         updateRotationMapView()
     }
     
-    private func newGame(withPlayerX playerX: Player, playerO: Player, rotationPattern: RotationPattern? = nil) -> GameController {
+    private func newGame(withPlayerX playerX: Player, playerO: Player, rotationPattern: RotationPattern? = nil, playHistory: [GameStateSnapshot]? = nil) -> GameController {
         var game: GameController!
-        if let rotationPattern = rotationPattern {
-            game = GameController(playerX: playerX, playerO: playerO, rotationPattern: rotationPattern)
+        if let rotationPattern = rotationPattern, let playHistory = playHistory {
+            game = GameController(playerX: playerX, playerO: playerO, rotationPattern: rotationPattern, playHistory: playHistory)
         }
         else {
             game = GameController(playerX: playerX, playerO: playerO)
@@ -293,6 +292,8 @@ class GameViewController: UIViewController {
             redoButton.isEnabled = game?.hasRedo ?? false
             if isTutorialMode {
                 tutorialView.label.text = TutorialData.tutorialText[gameStateSnapshot.playHistoryIndex]
+                tutorialView.backButton.isEnabled = game?.hasUndo ?? false
+                tutorialView.nextButton.isEnabled = game?.hasRedo ?? false || gameStateSnapshot.gameState == .initial
             }
         } catch {}
     }
@@ -319,8 +320,8 @@ private let humanIsPlayerXText = NSLocalizedString("You are X", comment: "Human 
 private let humanIsPlayerOText = NSLocalizedString("You are O", comment: "Human is Player O label text")
 private let currentPlayerText = NSLocalizedString("%@ Plays", comment: "Current Player Indicator text template")
 private let gamePiecesRotateText = NSLocalizedString("Pieces move", comment: "Game pieces all rotate text")
-private let resumeGameText = NSLocalizedString("Resume Game", comment: "Resume game button text")
-private let endGameText = NSLocalizedString("End Game", comment: "End game button text")
+private let resumeGameText = NSLocalizedString("Resume", comment: "Resume game button text")
+private let endGameText = NSLocalizedString("End", comment: "End game button text")
 private let xWinsText = NSLocalizedString("Player X Wins!", comment: "Player X Wins")
 private let oWinsText = NSLocalizedString("Player O Wins!", comment: "Player O Wins")
 private let tieText = NSLocalizedString("You Tied.", comment: "You tied")

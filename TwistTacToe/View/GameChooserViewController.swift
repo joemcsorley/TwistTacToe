@@ -34,8 +34,8 @@ class GameChooserViewController: UIViewController {
     private func setupNavigationBar() {
         navigationItem.title = screenTitle
         
-        let howToPlayButton = UIBarButtonItem(title: howToPlayButtonTitle, style: .plain, target: self, action: #selector(handleHowToPlay))
-        let titleTextAttributes = [NSAttributedString.Key.font: UIFont.systemFont(ofSize: 10, weight: .bold),
+        let howToPlayButton = UIBarButtonItem(title: helpButtonTitle, style: .plain, target: self, action: #selector(handleHowToPlay))
+        let titleTextAttributes = [NSAttributedString.Key.font: UIFont.systemFont(ofSize: 14, weight: .bold),
                                    NSAttributedString.Key.foregroundColor: UIColor.brown]
         howToPlayButton.setTitleTextAttributes(titleTextAttributes, for: .normal)
         howToPlayButton.setTitleTextAttributes(titleTextAttributes, for: .focused)
@@ -113,7 +113,7 @@ class GameChooserViewController: UIViewController {
 // MARK: - Localizable Strings
 
 private let screenTitle = NSLocalizedString("Twist-Tac-Toe", comment: "Screen title")
-private let howToPlayButtonTitle = NSLocalizedString("How to Play", comment: "How to Play button text")
+private let helpButtonTitle = NSLocalizedString("Help", comment: "Help button text")
 private let onePlayerButtonTitle = NSLocalizedString("One Player", comment: "One Player button title")
 private let twoPlayerButtonTitle = NSLocalizedString("Two Player", comment: "Two Player button title")
 private let humanIsPlayerXText = NSLocalizedString("You are X", comment: "Human is Player X label text")

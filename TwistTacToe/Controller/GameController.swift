@@ -47,12 +47,16 @@ class GameController {
 
     // MARK: - Init / Setup
     
-    init(playerX: Player, playerO: Player, rotationPattern: RotationPattern = RotationPattern()) {
+    init(playerX: Player, playerO: Player, rotationPattern: RotationPattern = RotationPattern(), playHistory: [GameStateSnapshot]? = nil, startingAtIndex playHistoryIndex: Int = 0) {
         self.rotationPattern = rotationPattern
         self.playerX = playerX
         self.playerO = playerO
         setupPlayer(playerX)
         setupPlayer(playerO)
+        if let playHistory = playHistory {
+            self.playHistory = playHistory
+            self.playHistoryIndex = playHistoryIndex.clamp(0, playHistory.count-1)
+        }
     }
 
     private func setupPlayer(_ player: Player) {
@@ -71,11 +75,6 @@ class GameController {
         advanceGameState()
     }
     
-    func play(withHistory playHistory: [GameStateSnapshot], startingAtIndex playHistoryIndex: Int = 0) {
-        self.playHistory = playHistory
-        self.playHistoryIndex = playHistoryIndex.clamp(0, playHistory.count-1)
-    }
-
     func resume() {
         isGamePaused = false
         // Pop off play history entries up to and including the one currently pointed to by playHistoryIndex.
