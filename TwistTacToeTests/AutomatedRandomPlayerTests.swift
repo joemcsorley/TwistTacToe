@@ -10,7 +10,6 @@ import RxSwift
 @testable import TwistTacToe
 
 class AutomatedRandomPlayerTests: XCTestCase {
-    var callback: (GameBoard) -> Void = { _ in }
     private let disposeBag = DisposeBag()
 
     func testPlayerTakesTurn() {

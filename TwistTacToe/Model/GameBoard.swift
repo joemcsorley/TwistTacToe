@@ -21,7 +21,7 @@ import Foundation
 // 9 bits of which represent occupied X, and O locations.  The lowest order bit
 // represents board location 0, etc.
 
-struct GameBoard: Equatable {
+struct GameBoard: Hashable, CustomStringConvertible {
     private(set) var xBits: BoardBits = 0
     private(set) var oBits: BoardBits = 0
     private(set) var isGameOver: Bool = false
@@ -117,6 +117,31 @@ struct GameBoard: Equatable {
         let locationCount = boardLocations.count
         let randomIndex = Int(arc4random_uniform(UInt32(locationCount)))
         return boardLocations[randomIndex]
+    }
+    
+    // MARK: - CustomStringConvertible
+    
+    var description: String {
+        var str = ""
+        var boardArray: [String] = ["_","_","_","_","_","_","_","_","_"]
+        var xBits = self.xBits
+        var oBits = self.oBits
+        var idx = 0
+        while xBits > 0 || oBits > 0 {
+            if xBits & 1 == 1 {
+                boardArray[idx] = "X"
+            }
+            else if oBits & 1 == 1 {
+                boardArray[idx] = "O"
+            }
+            xBits >>= 1
+            oBits >>= 1
+            idx += 1
+        }
+        for i in [0,3,6] {
+            str += "\n"+boardArray[0+i]+boardArray[1+i]+boardArray[2+i]
+        }
+        return str
     }
     
     // MARK: - Equatable

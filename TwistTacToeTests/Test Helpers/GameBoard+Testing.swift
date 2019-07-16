@@ -8,27 +8,6 @@
 import Foundation
 @testable import TwistTacToe
 
-extension GameBoard {
-    func prettyPrint() {
-        func boardRangeToString(_ range: [Int]) throws -> String {
-            var boardRangeString = ""
-            for i in range {
-                let symbol = try gamePiece(atLocation: i)
-                boardRangeString += (symbol?.rawValue ?? "_") + ", "
-            }
-            return boardRangeString
-        }
-        
-        do {
-            print(try boardRangeToString([0, 1, 2]))
-            print(try boardRangeToString([3, 4, 5]))
-            print(try boardRangeToString([6, 7, 8]))
-        } catch {
-            print("Something went wrong pretty-printing the board")
-        }
-    }
-}
-
 let unfinishedBoard1 = GameBoard.newWithPattern([
     _X, __, _O,
     _O, __, __,

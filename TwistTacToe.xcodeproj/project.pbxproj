@@ -37,6 +37,8 @@
 		D8339D7122CC1C35004BA71B /* TutorialView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8339D7022CC1C35004BA71B /* TutorialView.swift */; };
 		D8339D7322CD119B004BA71B /* Comparable+TwistTacToe.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8339D7222CD119B004BA71B /* Comparable+TwistTacToe.swift */; };
 		D8339D7622CD2316004BA71B /* TutorialData.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8339D7522CD2316004BA71B /* TutorialData.swift */; };
+		D8339D7822DD3138004BA71B /* AutomatedImpossiblePlayerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8339D7722DD3137004BA71B /* AutomatedImpossiblePlayerTests.swift */; };
+		D8339D7A22DD681A004BA71B /* Double+Utility.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8339D7922DD681A004BA71B /* Double+Utility.swift */; };
 		D85E401322BC5F9E00611B37 /* GameChooserViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D85E401222BC5F9E00611B37 /* GameChooserViewController.swift */; };
 		D89AEA1F22A34C3E00F59525 /* UIView+TwistTacToe.swift in Sources */ = {isa = PBXBuildFile; fileRef = D89AEA1E22A34C3E00F59525 /* UIView+TwistTacToe.swift */; };
 		D89AEA2122A3585400F59525 /* UIColor+TwistTacToe.swift in Sources */ = {isa = PBXBuildFile; fileRef = D89AEA2022A3585400F59525 /* UIColor+TwistTacToe.swift */; };
@@ -96,6 +98,8 @@
 		D8339D7022CC1C35004BA71B /* TutorialView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TutorialView.swift; sourceTree = "<group>"; };
 		D8339D7222CD119B004BA71B /* Comparable+TwistTacToe.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Comparable+TwistTacToe.swift"; sourceTree = "<group>"; };
 		D8339D7522CD2316004BA71B /* TutorialData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TutorialData.swift; sourceTree = "<group>"; };
+		D8339D7722DD3137004BA71B /* AutomatedImpossiblePlayerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AutomatedImpossiblePlayerTests.swift; sourceTree = "<group>"; };
+		D8339D7922DD681A004BA71B /* Double+Utility.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Double+Utility.swift"; sourceTree = "<group>"; };
 		D85E401222BC5F9E00611B37 /* GameChooserViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameChooserViewController.swift; sourceTree = "<group>"; };
 		D89AEA1E22A34C3E00F59525 /* UIView+TwistTacToe.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UIView+TwistTacToe.swift"; sourceTree = "<group>"; };
 		D89AEA2022A3585400F59525 /* UIColor+TwistTacToe.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UIColor+TwistTacToe.swift"; sourceTree = "<group>"; };
@@ -174,6 +178,7 @@
 		0B1E9A122129BA4200ECFCC0 /* Test Helpers */ = {
 			isa = PBXGroup;
 			children = (
+				D8339D7922DD681A004BA71B /* Double+Utility.swift */,
 				0B1E9A132129BA8F00ECFCC0 /* GameBoard+Testing.swift */,
 				D821035A22A1A1CE00A8EB74 /* XCTestCase+TwistTacToe.swift */,
 				D821035C22A1A26500A8EB74 /* XCTestExpectation+TwistTacToe.swift */,
@@ -207,6 +212,7 @@
 		0B50E6111F9E1CA70019F181 /* TwistTacToeTests */ = {
 			isa = PBXGroup;
 			children = (
+				D8339D7722DD3137004BA71B /* AutomatedImpossiblePlayerTests.swift */,
 				D821035F22A1AB5500A8EB74 /* AutomatedRandomPlayerTests.swift */,
 				0B50E6121F9E1CA70019F181 /* GameBoardTests.swift */,
 				D89C5BDD22A1C2A900214A24 /* GameControllerTests.swift */,
@@ -447,8 +453,10 @@
 				D821036022A1AB5500A8EB74 /* AutomatedRandomPlayerTests.swift in Sources */,
 				D821035B22A1A1CE00A8EB74 /* XCTestCase+TwistTacToe.swift in Sources */,
 				0B10AF911F9E43F300233D79 /* HumanPlayerTests.swift in Sources */,
+				D8339D7A22DD681A004BA71B /* Double+Utility.swift in Sources */,
 				0B1E9A142129BA8F00ECFCC0 /* GameBoard+Testing.swift in Sources */,
 				D821035322A06FC100A8EB74 /* RotationPatternTests.swift in Sources */,
+				D8339D7822DD3138004BA71B /* AutomatedImpossiblePlayerTests.swift in Sources */,
 				D89C5BDE22A1C2A900214A24 /* GameControllerTests.swift in Sources */,
 				0B50E6131F9E1CA70019F181 /* GameBoardTests.swift in Sources */,
 				D821035D22A1A26500A8EB74 /* XCTestExpectation+TwistTacToe.swift in Sources */,

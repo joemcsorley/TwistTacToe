@@ -88,11 +88,11 @@ class GameChooserViewController: UIViewController {
     @objc
     private func handleOnePlayerTapped() {
         if playerChooserButtons.selectedButton == humanPlayerIsXButtonId {
-            let gameViewController = GameViewController(playerX: HumanPlayer(symbol: .X), playerO: AutomatedRandomPlayer(symbol: .O))
+            let gameViewController = GameViewController(playerX: HumanPlayer(symbol: .X), playerO: AutomatedImpossiblePlayer(symbol: .O))
             navigationController?.pushViewController(gameViewController, animated: true)
         }
         else {
-            let gameViewController = GameViewController(playerX: AutomatedRandomPlayer(symbol: .X), playerO: HumanPlayer(symbol: .O))
+            let gameViewController = GameViewController(playerX: AutomatedImpossiblePlayer(symbol: .X), playerO: HumanPlayer(symbol: .O))
             navigationController?.pushViewController(gameViewController, animated: true)
         }
     }
