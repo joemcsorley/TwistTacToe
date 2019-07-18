@@ -14,8 +14,11 @@ class GameChooserViewController: UIViewController {
     private let onePlayerButton = UIButton()
     private let twoPlayerButton = UIButton()
     private let playerChooserButtons = RadioButtonsView(numberOfButtons: 2)
+    private let difficultyChooserButtons = RadioButtonsView(numberOfButtons: 2)
     private let humanPlayerIsXButtonId = 0
     private let humanPlayerIsOButtonId = 1
+    private let easyDifficultyButtonId = 0
+    private let impossibleDifficultyButtonId = 1
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -29,6 +32,7 @@ class GameChooserViewController: UIViewController {
         setupOnePlayerButton()
         setupTwoPlayerButton()
         setupPlayerChooserButtons()
+        setupDifficultyChooserButtons()
     }
 
     private func setupNavigationBar() {
@@ -65,10 +69,17 @@ class GameChooserViewController: UIViewController {
     private func setupPlayerChooserButtons() {
         playerChooserButtons.buttons[humanPlayerIsXButtonId].label.text = humanIsPlayerXText
         playerChooserButtons.buttons[humanPlayerIsOButtonId].label.text = humanIsPlayerOText
-        playerChooserButtons.setSelectedButton(humanPlayerIsXButtonId)
+        playerChooserButtons.setSelectedButtonId(humanPlayerIsXButtonId)
         view.addSubviewWithAutoLayout(playerChooserButtons)
     }
-    
+
+    private func setupDifficultyChooserButtons() {
+        difficultyChooserButtons.buttons[easyDifficultyButtonId].label.text = easyDifficultyText
+        difficultyChooserButtons.buttons[impossibleDifficultyButtonId].label.text = impossibleDifficultyText
+        difficultyChooserButtons.setSelectedButtonId(easyDifficultyButtonId)
+        view.addSubviewWithAutoLayout(difficultyChooserButtons)
+    }
+
     private func layout() {
         NSLayoutConstraint.activate([
             onePlayerButton.topAnchor.constraint(equalTo: view.normalizedLayoutGuide.topAnchor, constant: 50),
@@ -77,22 +88,39 @@ class GameChooserViewController: UIViewController {
             playerChooserButtons.topAnchor.constraint(equalTo: onePlayerButton.bottomAnchor, constant: 15),
             playerChooserButtons.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 45),
             playerChooserButtons.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -45),
-            twoPlayerButton.topAnchor.constraint(equalTo: playerChooserButtons.bottomAnchor, constant: 30),
+            difficultyChooserButtons.topAnchor.constraint(equalTo: playerChooserButtons.bottomAnchor, constant: 20),
+            difficultyChooserButtons.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 45),
+            difficultyChooserButtons.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -45),
+            twoPlayerButton.topAnchor.constraint(equalTo: difficultyChooserButtons.bottomAnchor, constant: 30),
             twoPlayerButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 30),
             twoPlayerButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -30),
         ])
+    }
+
+    // MARK: - Helpers
+
+    private func getPlayerForChosenDifficulty(withSymbol symbol: GamePiece) -> Player {
+        return difficultyChooserButtons.selectedButtonId == impossibleDifficultyButtonId ? AutomatedImpossiblePlayer(symbol: symbol) : AutomatedRandomPlayer(symbol: symbol)
+    }
+    
+    private func addDropShadow(toView v: UIView) {
+        v.layer.masksToBounds = false
+        v.layer.shadowOpacity = 1
+        v.layer.shadowRadius = 4.0
+        v.layer.shadowOffset = CGSize(width: 2, height: 2)
+        v.layer.shadowColor = UIColor(red: 0, green: 0, blue: 0, alpha: 0.4).cgColor
     }
     
     // MARK: - Button Handlers
     
     @objc
     private func handleOnePlayerTapped() {
-        if playerChooserButtons.selectedButton == humanPlayerIsXButtonId {
-            let gameViewController = GameViewController(playerX: HumanPlayer(symbol: .X), playerO: AutomatedImpossiblePlayer(symbol: .O))
+        if playerChooserButtons.selectedButtonId == humanPlayerIsXButtonId {
+            let gameViewController = GameViewController(playerX: HumanPlayer(symbol: .X), playerO: getPlayerForChosenDifficulty(withSymbol: .O))
             navigationController?.pushViewController(gameViewController, animated: true)
         }
         else {
-            let gameViewController = GameViewController(playerX: AutomatedImpossiblePlayer(symbol: .X), playerO: HumanPlayer(symbol: .O))
+            let gameViewController = GameViewController(playerX: getPlayerForChosenDifficulty(withSymbol: .X), playerO: HumanPlayer(symbol: .O))
             navigationController?.pushViewController(gameViewController, animated: true)
         }
     }
@@ -118,3 +146,5 @@ private let onePlayerButtonTitle = NSLocalizedString("One Player", comment: "One
 private let twoPlayerButtonTitle = NSLocalizedString("Two Player", comment: "Two Player button title")
 private let humanIsPlayerXText = NSLocalizedString("You are X", comment: "Human is Player X label text")
 private let humanIsPlayerOText = NSLocalizedString("You are O", comment: "Human is Player O label text")
+private let easyDifficultyText = NSLocalizedString("Easy", comment: "Easy difficulty level label text")
+private let impossibleDifficultyText = NSLocalizedString("Impossible", comment: "Impossible difficulty level label text")

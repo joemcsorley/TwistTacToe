@@ -11,7 +11,7 @@ import RxCocoa
 
 class RadioButtonsView: UIView {
     private var numberOfButtons = 1
-    private(set) var selectedButton: Int?
+    private(set) var selectedButtonId: Int?
     private(set) var buttons: [RadioButtonView] = []
     private let disposeBag = DisposeBag()
 
@@ -32,7 +32,7 @@ class RadioButtonsView: UIView {
         backgroundColor = UIColor.clear
         for i in 0..<numberOfButtons {
             let radioButtonView = RadioButtonView(buttonId: i)
-            radioButtonView.tapPublisher.subscribe(onNext: setSelectedButton(_:)).disposed(by: disposeBag)
+            radioButtonView.tapPublisher.subscribe(onNext: setSelectedButtonId(_:)).disposed(by: disposeBag)
             addSubviewWithAutoLayout(radioButtonView)
             buttons.append(radioButtonView)
         }
@@ -58,13 +58,13 @@ class RadioButtonsView: UIView {
     
     // MARK: - Public interface methods
     
-    func setSelectedButton(_ i: Int) {
+    func setSelectedButtonId(_ i: Int) {
         guard i >= 0 && i < numberOfButtons else { return }
         buttons.forEach {
             $0.button.setTitle(" ", for: .normal)
         }
         buttons[i].button.setTitle("✓", for: .normal)
-        selectedButton = i
+        selectedButtonId = i
     }
 }
 
