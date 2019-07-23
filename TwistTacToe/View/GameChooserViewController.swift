@@ -13,12 +13,14 @@ import RxCocoa
 class GameChooserViewController: UIViewController {
     private let onePlayerButton = UIButton()
     private let twoPlayerButton = UIButton()
+    
     private let playerChooserButtons = RadioButtonsView(numberOfButtons: 2)
-    private let difficultyChooserButtons = RadioButtonsView(numberOfButtons: 2)
     private let humanPlayerIsXButtonId = 0
     private let humanPlayerIsOButtonId = 1
-    private let easyDifficultyButtonId = 0
-    private let impossibleDifficultyButtonId = 1
+    
+    private let difficultyChooserButtons = RadioButtonsView(numberOfButtons: 2)
+    private let difficultyEasyButtonId = 0
+    private let difficultyImpossibleButtonId = 1
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -74,9 +76,9 @@ class GameChooserViewController: UIViewController {
     }
 
     private func setupDifficultyChooserButtons() {
-        difficultyChooserButtons.buttons[easyDifficultyButtonId].label.text = easyDifficultyText
-        difficultyChooserButtons.buttons[impossibleDifficultyButtonId].label.text = impossibleDifficultyText
-        difficultyChooserButtons.setSelectedButtonId(easyDifficultyButtonId)
+        difficultyChooserButtons.buttons[difficultyEasyButtonId].label.text = easyDifficultyText
+        difficultyChooserButtons.buttons[difficultyImpossibleButtonId].label.text = impossibleDifficultyText
+        difficultyChooserButtons.setSelectedButtonId(difficultyEasyButtonId)
         view.addSubviewWithAutoLayout(difficultyChooserButtons)
     }
 
@@ -100,7 +102,7 @@ class GameChooserViewController: UIViewController {
     // MARK: - Helpers
 
     private func getPlayerForChosenDifficulty(withSymbol symbol: GamePiece) -> Player {
-        return difficultyChooserButtons.selectedButtonId == impossibleDifficultyButtonId ? AutomatedImpossiblePlayer(symbol: symbol) : AutomatedRandomPlayer(symbol: symbol)
+        return difficultyChooserButtons.selectedButtonId == difficultyImpossibleButtonId ? AutomatedImpossiblePlayer(symbol: symbol) : AutomatedRandomPlayer(symbol: symbol)
     }
     
     private func addDropShadow(toView v: UIView) {
